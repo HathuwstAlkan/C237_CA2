@@ -7,14 +7,14 @@
 <body>
     <div class="container">
         <h1 class="mt-5">Login</h1>
-        <% if (errors && errors.length > 0) { %>
+        <% if (typeof errors !== 'undefined' && errors.length > 0) { %>
             <div class="alert alert-danger">
                 <% errors.forEach(function(error) { %>
                     <p><%= error %></p>
                 <% }); %>
             </div>
         <% } %>
-        <% if (messages && messages.length > 0) { %>
+        <% if (typeof messages !== 'undefined' && messages.length > 0) { %>
             <div class="alert alert-success">
                 <% messages.forEach(function(message) { %>
                     <p><%= message %></p>

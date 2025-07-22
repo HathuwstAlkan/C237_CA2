@@ -15,17 +15,6 @@ const db = mysql.createConnection({
     port: 61002,
 });
 
-// Test database connection
-db.getConnection()
-    .then(connection => {
-        console.log('Connected to database pool successfully!');
-        connection.release();
-    })
-    .catch(err => {
-        console.error('Failed to connect to database pool:', err);
-        process.exit(1);
-    });
-
 // --- EJS View Engine Setup ---
 // Set EJS as the template engine for rendering dynamic content
 app.set('view engine', 'ejs');
@@ -85,6 +74,11 @@ app.get('/', (req, res) => {
 // Register Page Route
 app.get('/register', (req, res) => {
     res.render('register', { messages: req.flash('error'), formData: req.flash('formData')[0] });
+});
+
+// Login Page Route
+app.get('/login', (req, res) => {
+    res.render('login', { messages: req.flash('error'), formData: req.flash('formData')[0] });
 });
 
 // Customers List Route: Fetches all customers from the database and renders them
