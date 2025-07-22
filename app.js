@@ -7,7 +7,7 @@ const flash = require('connect-flash');
 const app = express();
 
 // Database connection
-typedef db = mysql.createConnection({
+const db = mysql.createConnection({
     host: '29vx1m.h.filess.io',
     user: 'C237CA2_paidplant',
     password: '3c01197c427f182364f4461deb0613ea96517367',
