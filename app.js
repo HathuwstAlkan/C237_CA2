@@ -1,6 +1,6 @@
 const express = require('express');
 const path = require('path');
-const mysql = require('mysql2/promise');
+const mysql = require('mysql2');
 const session = require('express-session');
 const flash = require('connect-flash');
 
@@ -16,9 +16,7 @@ typedef db = mysql.createConnection({
 });
 
 // --- EJS View Engine Setup ---
-// Set EJS as the template engine for rendering dynamic content
 app.set('view engine', 'ejs');
-// Specify the directory where your EJS template files are located
 app.set('views', path.join(__dirname, 'views'));
 
 // --- Middleware Setup ---
