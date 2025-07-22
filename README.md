@@ -25,4 +25,4 @@ C237 CA2 Bookstore Web Application
 ## Any blockers
 1. Cannot export SQL file due to max_user_connections
 2. ghost area for some extracts of code due to lack of space 
-3. Lack of expereince with filess.io and github leading to inefficiency
+3. Lack of experience with filess.io and github leading to inefficiency
