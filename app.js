@@ -26,10 +26,10 @@ app.use(express.static(path.join(__dirname, 'public'))); // Serves static files 
 
 // Session middleware configuration
 app.use(session({
-    secret: 'your_super_secret_key_for_session', // IMPORTANT: Change this to a strong, random string
-    resave: false, // Don't save session if unmodified
-    saveUninitialized: true, // Save new but uninitialized sessions
-    cookie: { maxAge: 1000 * 60 * 60 * 24 * 7 } // Session expires after 1 week
+    secret: 'secret_key',
+    resave: false,
+    saveUninitialized: true, 
+    cookie: { maxAge: 1000 * 60 * 60 * 24 * 7 } // Session expires after 1 week (in milliseconds)
 }));
 
 // Flash messages middleware for temporary messages
@@ -52,9 +52,16 @@ const checkAuthenticated = (req, res, next) => {
 
 // Middleware to check if user is admin.
 const checkAdmin = (req, res, next) => {
-    if (!req.session.user || req.session.user.role !== 'admin') {
+    // Ensure user is authenticated before checking role
+    if (!req.session.user) {
+        req.flash('error', 'Access denied: Please log in.');
+        return res.redirect('/login');
+    }
+    if (req.session.user.role === 'admin') {
+        return next();
+    } else {
         req.flash('error', 'Access denied: You must be an administrator.');
-        return res.redirect('/dashboard');
+        res.redirect('/dashboard'); // Redirect to dashboard or home for non-admins
     }
     next();
 };
@@ -75,160 +82,81 @@ app.get('/login', (req, res) => {
     res.render('login', { messages: req.flash('success'), errors: req.flash('error') });
 });
 
-// Middleware to validate registration input.
-const validateRegistration = (req, res, next) => {
-    const { username, email, password, address, contact } = req.body;
-    if (!username || !email || !password || !address || !contact) {
-        req.flash('error', 'All fields are required.');
-        req.flash('formData', req.body);
-        return res.redirect('/register');
+// Customers List Route: Fetches all customers from the database and renders them
+// This serves as your "View all items" (for customers) feature
+app.get('/customers', async (req, res) => {
+    try {
+        const [customers] = await db.execute('SELECT * FROM customers');
+        res.render('customerList', { customers: customers });
+    } catch (error) {
+        console.error('Error fetching customers:', error);
+        res.status(500).send('Error fetching customer list.');
     }
-    if (password.length < 6) {
-        req.flash('error', 'Password should be at least 6 characters long.');
-        req.flash('formData', req.body);
-        return res.redirect('/register');
-    }
-    next();
-};
-
-// Register Form Submission Route: Handles new user registration.
-app.post('/register', validateRegistration, (req, res) => {
-    const { username, email, password, address, contact, role } = req.body;
-    const userRole = (role === 'admin' && req.session.user && req.session.user.role === 'admin') ? 'admin' : 'regular'; // Only admin can register other admins
-
-    // IMPORTANT: Use bcrypt for password hashing in production! SHA1 is insecure.
-    const sql = 'INSERT INTO users (username, email, password, address, phone_number, role) VALUES (?, ?, SHA1(?), ?, ?, ?)';
-    db.execute(sql, [username, email, password, address, contact, userRole])
-        .then(result => {
-            console.log('User registered:', result);
-            req.flash('success', 'Registration successful! Please log in.');
-            res.redirect('/login');
-        })
-        .catch(err => {
-            console.error('Error during registration:', err);
-            if (err.code === 'ER_DUP_ENTRY') {
-                req.flash('error', 'Username or email already exists.');
-            } else {
-                req.flash('error', 'Registration failed. Please try again.');
-            }
-            req.flash('formData', req.body);
-            res.redirect('/register');
-        });
 });
 
-// Login Form Submission Route: Authenticates user and sets session.
-app.post('/login', (req, res) => {
-    const { email, password } = req.body;
-    if (!email || !password) {
-        req.flash('error', 'All fields are required.');
-        return res.redirect('/login');
-    }
+// DELETE route for customers
+// This should be protected by authentication/authorization middleware in a real app.
+app.post('/customers/delete/:id', async (req, res) => {
+    const customerId = req.params.id;
 
-    // IMPORTANT: Use bcrypt.compare() with bcrypt hashes in production!
-    const sql = 'SELECT * FROM users WHERE email = ? AND password = SHA1(?)';
-    db.execute(sql, [email, password])
-        .then(([results]) => {
-            if (results.length > 0) {
-                req.session.user = results[0];
-                req.flash('success', 'Login successful!');
-                res.redirect('/dashboard');
-            } else {
-                req.flash('error', 'Invalid email or password.');
-                res.redirect('/login');
-            }
-        })
-        .catch(err => {
-            console.error('Error during login:', err);
-            req.flash('error', 'An error occurred during login.');
-            res.redirect('/login');
-        });
-});
+    try {
+        // --- IMPORTANT: Implement Role-Based Authorization Here ---
+        // You MUST check if the logged-in user has 'admin' role before allowing deletion.
+        // This will involve checking 'req.session.user.role' after a user logs in.
+        // For example:
+        // if (!req.session.user || req.session.user.role !== 'admin') {
+        //     req.flash('error', 'Access Denied: Only administrators can delete records.');
+        //     return res.status(403).redirect('/customers'); // Redirect or render an error page
+        // }
 
-// Dashboard Route: Renders the user dashboard (accessible to all logged-in users).
-app.get('/dashboard', checkAuthenticated, (req, res) => {
-    res.render('customerDashboard', { user: req.session.user, messages: req.flash('success')});
-});
+        const [result] = await db.execute('DELETE FROM customers WHERE customer_id = ?', [customerId]);
 
-// Admin Dashboard Route: Renders the admin dashboard (accessible only to logged-in admins).
-app.get('/admin', checkAuthenticated, checkAdmin, (req, res) => {
-    res.render('adminDashboard', { user: req.session.user, messages: req.flash('success')});
-});
-
-// Logout Route: Destroys user session and redirects to home.
-app.get('/logout', (req, res) => {
-    req.session.destroy(err => {
-        if (err) {
-            console.error('Error destroying session:', err);
+        if (result.affectedRows === 0) {
+            req.flash('error', 'Customer not found.'); // Use flash for messages
+            return res.status(404).redirect('/customers');
         }
-        res.redirect('/');
-    });
+
+        req.flash('success', 'Customer deleted successfully!'); // Set success flash message
+        res.redirect('/customers');
+
+    } catch (error) {
+        console.error('Error deleting customer:', error);
+        req.flash('error', 'Error deleting customer.');
+        res.status(500).redirect('/customers');
+    }
 });
 
-// Customers List Route: Fetches and displays all users (customers) for admins.
-app.get('/customers', checkAuthenticated, checkAdmin, (req, res) => {
-    db.execute('SELECT user_id, username, first_name, last_name, email, phone_number, role FROM users')
-        .then(([users]) => {
-            res.render('customerList', { users: users, user: req.session.user, messages: req.flash('success'), errors: req.flash('error') });
-        })
-        .catch(err => {
-            console.error('Error fetching users (customers):', err);
-            req.flash('error', 'Error fetching customer list.');
-            res.status(500).redirect('/dashboard');
-        });
-});
 
-// DELETE route for users (customers): Allows admins to delete users.
-app.post('/customers/delete/:id', checkAuthenticated, checkAdmin, (req, res) => {
-    const userId = req.params.id;
-
-    db.execute('DELETE FROM users WHERE user_id = ?', [userId])
-        .then(([result]) => {
-            if (result.affectedRows === 0) {
-                req.flash('error', 'User (customer) not found.');
-                return res.status(404).redirect('/customers');
-            }
-            req.flash('success', 'User (customer) deleted successfully!');
-            res.redirect('/customers');
-        })
-        .catch(err => {
-            console.error('Error deleting user (customer):', err);
-            req.flash('error', 'Error deleting user.');
-            res.status(500).redirect('/customers');
-        });
-});
-
-// Add Item form: Renders the form to add a book to the cart.
+// Add Item form
 app.get('/cart/new', checkAuthenticated, async (req, res) => {
     try {
-        // Fetches available books for the dropdown
         const [books] = await db.execute('SELECT id, title FROM Books');
         res.render('create_cart_item', {
             user: req.session.user,
             books,
-            messages: req.flash('error') // Pass error messages to the form
+            messages: req.flash('error')
         });
     } catch (err) {
-        console.error('Error loading create cart item form:', err);
-        req.flash('error', 'Could not load cart item form.');
+        console.error('Error loading create form:', err);
+        req.flash('error', 'Could not load form');
         res.redirect('/dashboard');
     }
 });
 
-// Handle form POST: Adds a book to the user's cart.
+// Handle form POST
 app.post('/cart', checkAuthenticated, async (req, res) => {
     const { book_id, quantity } = req.body;
-    const customer_id = req.session.user.user_id; // Using user_id from session for customer_id
-
+    const customer_id = req.session.user.id;
     try {
         await db.execute(
             'INSERT INTO Cart (customer_id, book_id, quantity) VALUES (?,?,?)',
             [customer_id, book_id, quantity]
         );
-        req.flash('success', 'Book added to cart successfully!');
-        res.redirect('/dashboard'); // Redirect to dashboard or a cart view
+        req.flash('success', 'Book added to cart!');
+        res.redirect('/cart');
     } catch (err) {
         console.error('Error adding to cart:', err);
-        req.flash('error', 'Could not add to cart. Please try again.');
+        req.flash('error', 'Could not add to cart');
         res.redirect('/cart/new');
     }
 });
