@@ -23,6 +23,17 @@ C237 CA2 Bookstore Web Application
 5. Admin Features: Implement CRUD operations for Books.
 
 ## Any blockers
-1. Cannot export SQL file due to max_user_connections
-2. ghost area for some extracts of code due to lack of space 
-3. Lack of experience with filess.io and github leading to inefficiency
+1. Cannot access nor export SQL file due to max_user_connections on filess.io
+2. Ghost area for some extracts of code due to lack of space 
+3. Lack of experience with filess.io and github leading to inefficiency and poor troubleshooting attempts 
+
+## Test Accounts
+# username | email | password | role
+1. adminstrator | admin@bookstore.com | Adm!n123! | admin
+2. alice.smith | alicesmith@example.com | password: AliceSm!th | regular
+3. charlieb | charlie.brown@example.com | Charlie&r0wn | regular
+
+
+1	adminstrator	a05177999cf71bad47c87d9b2bceaa5d5a3ccc81	admin	Admin	Account	admin@bookstore.com	91234567	123 Admin Rd, Singapore	2025-07-22 13:31:26
+2	alice.smith	9c362ef9673ca717b9e30f58f130860e2879b1df	regular	Alice	Smith	alice.smith@example.com	87654321	456 Elm St, Singapore	2025-07-22 13:31:26
+3	charlieb	34aa3306b0d0e3a2473680d1a3a86c7ba0a2684e	regular	Charlie	Brown	charlie.brown@example.com	99887766	789 Pine Ave, Singapore	2025-07-22 13:31:26

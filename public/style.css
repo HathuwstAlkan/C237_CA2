@@ -1,0 +1,186 @@
+/*  Theme Colors */
+:root {
+    --primary-text-color: rgba(255, 255, 255, 0.85); /* Slightly less subtle white for main text */
+    --secondary-text-color: rgba(255, 255, 255, 0.7); /* Slightly less subtle for lead text */
+    --overlay-background: rgba(255, 255, 255, 0.15); /* 15% transparent white for frame */
+    --button-border-color: #ffffff; /* White border for buttons */
+    --button-hover-bg: rgba(255, 255, 255, 0.15); /* Subtle transparent background on hover */
+    --text-shadow-color: rgba(0, 0, 0, 0.8); /* Stronger shadow for readability */
+    --frame-shadow-color: rgba(0, 0, 0, 0.4); /* Stronger shadow for the frame */
+}
+
+/* Base Styles (Mobile) */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
+    font-family: 'nunito', sans-serif;
+    color: var(--primary-text-color);
+    box-sizing: border-box;
+}
+
+.full-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* IMPORTANT: Ensure this path is correct and the image is pre-blurred */
+    background-image: url('/assets/regisBG.png');
+    background-size: cover;
+    background-position: center;
+    /* Removed CSS blur filter */
+    filter: brightness(0.7); /* Made background darker for better text contrast */
+    z-index: -1;
+}
+
+/* Content Wrapper - Mobile Default */
+.content-wrapper {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column; /* Stack vertically for mobile */
+    justify-content: space-between; /* Push top/bottom sections apart */
+    align-items: center; /* Center horizontally */
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+/* Top Section - Mobile Default */
+.top-section {
+    text-align: center;
+    padding-top: 50px;
+    width: 100%;
+    margin-bottom: auto; /* Pushes this section to the top */
+}
+.top-section h1, .top-section .lead {
+    text-shadow: 2px 2px 4px var(--text-shadow-color);
+    color: var(--primary-text-color) !important;
+}
+.top-section .lead {
+    color: var(--secondary-text-color) !important;
+}
+
+/* Typewriter specific styles - Hidden by default (mobile) */
+.typewriter-container {
+    min-height: 2.5em; /* Reserve space to prevent layout shift */
+    display: none; /* Hidden on mobile */
+    vertical-align: middle;
+    max-width: 90%;
+    margin: 0 auto; /* Center if it becomes block */
+}
+.typewriter-text {
+    white-space: nowrap;
+    overflow: hidden;
+    letter-spacing: .05em;
+    display: inline-block; /* Essential for text to grow horizontally */
+}
+.typewriter-text.typewriter-blink {
+    border-right: .08em solid var(--primary-text-color); /* White blinking cursor */
+    animation: blink-caret .75s step-end infinite;
+}
+
+/* Blinking cursor animation */
+@keyframes blink-caret {
+    from, to { border-color: transparent }
+    50% { border-color: var(--primary-text-color) }
+}
+
+/* Login/Register Frame - Mobile Default (bottom-aligned and centered) */
+.login-register-frame {
+    background-color: var(--overlay-background);
+    backdrop-filter: blur(10px);
+    width: 90%; /* Take most of the width */
+    max-width: 400px; /* Max width for larger mobiles */
+    padding: 30px;
+    /* Changed border-radius to only apply to top corners for "grounded" look */
+    border-radius: 15px 15px 0 0;
+    box-shadow: 0 -5px 20px -5px var(--frame-shadow-color); /* Shadow only at the top edge */
+    margin-top: auto; /* Pushes this section to the bottom */
+    box-sizing: border-box;
+    text-align: center; /* Center content inside frame */
+
+    /* Ensure horizontal centering for mobile */
+    margin-left: auto;
+    margin-right: auto;
+    /* Added flex properties to ensure internal content is centered */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+.login-register-frame .card {
+    background-color: transparent !important;
+    border: none !important;
+}
+.login-register-frame .card-title,
+.login-register-frame .card-text {
+    color: var(--primary-text-color) !important;
+    text-shadow: 1px 1px 2px var(--text-shadow-color);
+}
+
+/* Minimalistic Outline Buttons with Hover Animation */
+.btn-outline-custom {
+    border: 2px solid var(--button-border-color);
+    color: var(--button-border-color);
+    background-color: transparent;
+    padding: 12px 30px;
+    font-size: 1.25rem;
+    border-radius: 5px; /* Not rounded */
+    transition: all 0.3s ease, transform 0.3s ease;
+}
+.btn-outline-custom:hover {
+    background-color: var(--button-hover-bg);
+    color: var(--button-border-color);
+    border-color: var(--button-border-color);
+    transform: scale(1.05);
+}
+
+/* Desktop Overrides (min-width: 768px) */
+@media (min-width: 768px) {
+    .content-wrapper {
+        flex-direction: row; /* Side-by-side for desktop */
+        justify-content: flex-start; /* Align columns to start */
+        padding: 0; /* Remove overall padding for desktop split */
+    }
+
+    .row.h-100 { /* Ensure the inner row also takes full height for column alignment */
+        height: 100%;
+    }
+
+    .top-section {
+        /* This now becomes the left column */
+        flex: 1; /* Allow it to grow */
+        padding: 50px; /* Restore padding for desktop */
+        margin-bottom: 0; /* Remove auto margin */
+        display: flex; /* Make it a flex container */
+        flex-direction: column; /* Stack children vertically */
+        justify-content: center; /* Vertically center content */
+        align-items: center; /* Horizontally center content */
+        text-align: center; /* Ensure text is centered for desktop */
+    }
+
+    /* Show typewriter on desktop */
+    .top-section .lead.static-text-slogan {
+        display: none; /* Hide static text on desktop */
+    }
+    .typewriter-container {
+        display: inline-block; /* Show typewriter container on desktop */
+    }
+
+    .login-register-frame {
+        /* This now becomes the right column */
+        flex: 0 0 33.3333%; /* Bootstrap col-md-4 equivalent */
+        max-width: 33.3333%; /* Bootstrap col-md-4 equivalent */
+        height: 100vh; /* Full viewport height */
+        border-radius: 0; /* No rounded corners for desktop frame */
+        box-shadow: -20px 0 50px -15px var(--frame-shadow-color); /* Subtle shadow on left edge */
+        margin-top: 0; /* Remove auto margin */
+        display: flex; /* Make it a flex container */
+        flex-direction: column; /* Stack children vertically */
+        justify-content: center; /* Vertically center content */
+        align-items: center; /* Horizontally center content */
+        margin-left: 0; /* Remove auto margins for desktop */
+        margin-right: 0;
+    }
+}
