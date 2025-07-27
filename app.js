@@ -28,6 +28,7 @@ const db = mysql.createPool({
    ============================== */
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+app.locals.basedir = app.get('views');
 
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
@@ -51,31 +52,33 @@ app.use((req, res, next) => {
   next();
 });
 
-// Optional: auto-set activePage by path
+// Set activePage
 app.use((req, res, next) => {
   const p = req.path;
   res.locals.activePage =
     p.startsWith('/books') ? 'books' :
     p.startsWith('/admin') ? 'admin' :
     p.startsWith('/customers') ? 'customers' :
-    p.startsWith('/dashboard') ? 'dashboard' :
-    '';
+    p.startsWith('/dashboard') ? 'dashboard' : '';
   next();
 });
 
-// Optional: cart item count (comment out if you prefer not to query each request)
+// Cart count (optional)
 app.use(async (req, res, next) => {
   try {
     if (!req.session.user) { res.locals.cartCount = 0; return next(); }
-    const [r] = await db.query('SELECT COALESCE(SUM(quantity),0) AS cnt FROM Cart WHERE customer_id = ?', [req.session.user.customer_id]);
+    const [r] = await db.query(
+      'SELECT COALESCE(SUM(quantity),0) AS cnt FROM Cart WHERE customer_id = ?',
+      [req.session.user.customer_id]
+    );
     res.locals.cartCount = (r[0] && r[0].cnt) || 0;
     next();
   } catch (e) {
     console.error('cartCount middleware error:', e);
-    res.locals.cartCount = 0;
-    next();
+    res.locals.cartCount = 0; next();
   }
 });
+
 
 /* ==============================
    Auth helpers
@@ -244,7 +247,7 @@ app.get('/customers', checkAuthenticated, checkAdmin, async (req, res) => {
       'SELECT customer_id, username, first_name, last_name, email, phone_number, role FROM Customers'
     );
     // NOTE: Ensure you have views/customerList.ejs. If not, change to res.json(users)
-    res.render('customerList', {
+    res.render('admin/customerList', {
       users,
       user: req.session.user,
       messages: req.flash('success'),
@@ -271,6 +274,41 @@ app.post('/customers/delete/:id', checkAuthenticated, checkAdmin, async (req, re
     console.error('Error deleting user (customer):', err);
     req.flash('error', 'Error deleting user.');
     res.status(500).redirect('/customers');
+  }
+});
+
+// Admin: individual book page (details + admin actions)
+app.get('/admin/books/:id', checkAuthenticated, checkAdmin, async (req, res) => {
+  try {
+    const id = req.params.id;
+
+    const [rows] = await db.query(
+      `SELECT book_id, title, author, isbn, genre, price, published_year, published_date, image_url, description
+       FROM Books WHERE book_id = ? LIMIT 1`,
+      [id]
+    );
+    if (!rows.length) {
+      req.flash('error', 'Book not found.');
+      return res.redirect('/books');
+    }
+    const book = rows[0];
+
+    // Related books: same genre, exclude current
+    const [related] = await db.query(
+      `SELECT book_id, title, author, price, image_url
+       FROM Books WHERE genre <=> ? AND book_id <> ? ORDER BY title ASC LIMIT 6`,
+      [book.genre, id]
+    );
+
+    res.render('admin/book', {
+      user: req.session.user,
+      book,
+      related
+    });
+  } catch (err) {
+    console.error('Error loading admin book page:', err);
+    req.flash('error', 'Could not load admin book page.');
+    res.redirect('/books');
   }
 });
 

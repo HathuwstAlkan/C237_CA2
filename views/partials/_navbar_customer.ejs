@@ -1,0 +1,48 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container">
+    <a class="navbar-brand" href="<%= user ? '/books' : '/' %>">BookStore</a>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#topNav"
+            aria-controls="topNav" aria-expanded="false" aria-label="Toggle">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="topNav">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link <%= activePage==='books' ? 'active' : '' %>" href="/books">Books</a>
+        </li>
+        <% if (user) { %>
+          <li class="nav-item">
+            <a class="nav-link <%= activePage==='dashboard' ? 'active' : '' %>" href="/dashboard">Dashboard</a>
+          </li>
+        <% } %>
+      </ul>
+
+      <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center">
+        <% if (user) { %>
+          <li class="nav-item me-2">
+            <a class="nav-link" href="/dashboard" title="Cart">🛒
+              <% if (typeof cartCount !== 'undefined') { %>
+                <span class="badge bg-success align-text-top"><%= cartCount %></span>
+              <% } %>
+            </a>
+          </li>
+          <li class="nav-item">
+            <span class="navbar-text me-3">Hi, <strong><%= user.username %></strong></span>
+          </li>
+          <li class="nav-item">
+            <a class="btn btn-outline-light btn-sm" href="/logout">Logout</a>
+          </li>
+        <% } else { %>
+          <li class="nav-item">
+            <a class="btn btn-outline-light btn-sm me-2" href="/">Login</a>
+          </li>
+          <li class="nav-item">
+            <a class="btn btn-primary btn-sm" href="/">Sign Up</a>
+          </li>
+        <% } %>
+      </ul>
+    </div>
+  </div>
+</nav>

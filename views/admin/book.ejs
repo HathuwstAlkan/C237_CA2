@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin • <%= book.title %></title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+  <%- include('/partials/_navbar') %>
+
+  <div class="container py-4">
+    <a href="/books" class="btn btn-link mb-3">&larr; Back to Books</a>
+
+    <div class="card mb-4">
+      <div class="row g-0">
+        <div class="col-md-4 p-3">
+          <% if (book.image_url) { %>
+            <img src="<%= book.image_url %>" class="img-fluid" alt="cover">
+          <% } else { %>
+            <div class="bg-light border d-flex align-items-center justify-content-center" style="height: 240px;">No Image</div>
+          <% } %>
+        </div>
+        <div class="col-md-8">
+          <div class="card-body">
+            <h2 class="card-title">Admin: <%= book.title %></h2>
+
+            <p class="mb-1"><strong>Author:</strong> <%= book.author || '-' %></p>
+            <p class="mb-1"><strong>ISBN:</strong> <%= book.isbn || '-' %></p>
+            <p class="mb-1"><strong>Genre:</strong> <%= book.genre || '-' %></p>
+            <p class="mb-1"><strong>Published:</strong>
+              <% if (book.published_date) { %>
+                <%= new Date(book.published_date).toISOString().slice(0,10) %>
+              <% } else { %>
+                <%= book.published_year || '-' %>
+              <% } %>
+            </p>
+            <p class="mb-3"><strong>Price:</strong> $<%= Number(book.price).toFixed(2) %></p>
+
+            <p class="card-text"><%= book.description || 'No description.' %></p>
+
+            <!-- Admin actions -->
+            <div class="mt-3 d-flex gap-2">
+              <a href="/books/<%= book.book_id %>/edit" class="btn btn-outline-primary">Edit</a>
+              <form method="POST" action="/books/<%= book.book_id %>/delete" onsubmit="return confirm('Delete this book?')">
+                <button class="btn btn-outline-danger">Delete</button>
+              </form>
+              <!-- Optional: view as customer -->
+              <a href="/books/<%= book.book_id %>" class="btn btn-outline-secondary">View as customer</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Related books -->
+    <%- include('/partials/relatedBooks', { related }) %>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
