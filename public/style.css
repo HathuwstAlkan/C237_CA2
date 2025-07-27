@@ -1,34 +1,82 @@
-/* Theme Colors */
+/* Theme Colors (Default: Dark Mode) */
 :root {
-    --primary-text-color: rgba(255, 255, 255, 0.85); /* Slightly less subtle white for main text */
-    --secondary-text-color: rgba(255, 255, 255, 0.7); /* Slightly less subtle for lead text */
-    --overlay-background: rgba(255, 255, 255, 0.15); /* 15% transparent white for frame */
-    --button-border-color: #ffffff; /* White border for buttons */
-    --button-hover-bg: rgba(255, 255, 255, 0.15); /* Subtle transparent background on hover */
-    --text-shadow-color: rgba(0, 0, 0, 0.8); /* Stronger shadow for readability */
-    --frame-shadow-color: rgba(0, 0, 0, 0.4); /* Stronger shadow for the frame */
+    --primary-text-color: rgba(255, 255, 255, 0.85);
+    --secondary-text-color: rgba(255, 255, 255, 0.7);
+    --overlay-background: rgba(255, 255, 255, 0.15);
+    --button-border-color: #ffffff;
+    --button-hover-bg: rgba(255, 255, 255, 0.15);
+    --text-shadow-color: rgba(0, 0, 0, 0.8);
+    --frame-shadow-color: rgba(0, 0, 0, 0.4);
 
-    /* Navbar Specific Colors */
-    --navbar-bg: #212529; /* Dark background for navbar */
+    --navbar-bg: #212529;
     --navbar-link-color: rgba(255, 255, 255, 0.75);
     --navbar-link-hover-color: #ffffff;
-    --navbar-active-link-color: #007bff; /* Bootstrap primary blue for active links */
-    --navbar-active-link-bg: rgba(255, 255, 255, 0.08); /* Subtle background for active links */
-    --dropdown-bg: #343a40; /* Darker dropdown background */
+    --navbar-active-link-color: #007bff;
+    --navbar-active-link-bg: rgba(255, 255, 255, 0.08);
+    --dropdown-bg: #343a40;
     --dropdown-link-color: rgba(255, 255, 255, 0.85);
     --dropdown-link-hover-bg: rgba(255, 255, 255, 0.1);
-    --badge-bg-color: #28a745; /* Green for cart badge */
+    --badge-bg-color: #28a745;
+
+    /* Main content background for dark mode */
+    --main-bg-color: #343a40; /* Dark grey for general page content */
+    --card-bg-color: #495057; /* Slightly lighter dark grey for cards */
+    --text-color-on-dark: #f8f9fa; /* Light text on dark backgrounds */
+    --border-color-dark: #6c757d; /* Border for elements in dark mode */
 }
+
+/* Light Mode Variables */
+body.light-mode {
+    --primary-text-color: rgba(0, 0, 0, 0.85);
+    --secondary-text-color: rgba(0, 0, 0, 0.7);
+    --overlay-background: rgba(0, 0, 0, 0.1); /* Lighter transparent black */
+    --button-border-color: #333333;
+    --button-hover-bg: rgba(0, 0, 0, 0.08);
+    --text-shadow-color: rgba(255, 255, 255, 0.6); /* Lighter shadow for dark text */
+    --frame-shadow-color: rgba(0, 0, 0, 0.2);
+
+    --navbar-bg: #f8f9fa; /* Light background for navbar */
+    --navbar-link-color: rgba(0, 0, 0, 0.75);
+    --navbar-link-hover-color: #000000;
+    --navbar-active-link-color: #007bff;
+    --navbar-active-link-bg: rgba(0, 0, 0, 0.05);
+    --dropdown-bg: #ffffff; /* White dropdown background */
+    --dropdown-link-color: rgba(0, 0, 0, 0.85);
+    --dropdown-link-hover-bg: rgba(0, 0, 0, 0.05);
+    --badge-bg-color: #28a745; /* Remains green */
+
+    /* Main content background for light mode */
+    --main-bg-color: #ffffff; /* White for general page content */
+    --card-bg-color: #f8f9fa; /* Light grey for cards */
+    --text-color-on-dark: #212529; /* Dark text on light backgrounds */
+    --border-color-dark: #ced4da; /* Border for elements in light mode */
+}
+
 
 /* Base Styles (Mobile) */
 html, body {
     height: 100%;
     margin: 0;
     padding: 0;
-    overflow-y: auto; /* Allow scrolling for content that exceeds viewport height */
-    font-family: 'Nunito', sans-serif; /* Corrected to Nunito */
-    color: var(--primary-text-color);
+    overflow-y: auto;
+    font-family: 'Nunito', sans-serif;
+    color: var(--primary-text-color); /* Uses theme variable */
     box-sizing: border-box;
+    background-color: var(--main-bg-color); /* Applies theme background */
+    transition: background-color 0.3s ease; /* Smooth transition for theme change */
+}
+
+/* Apply theme colors to general elements */
+.container, .card, .table {
+    background-color: var(--card-bg-color);
+    color: var(--text-color-on-dark);
+    border-color: var(--border-color-dark);
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+.table-dark { /* Specific for table header */
+    background-color: var(--navbar-bg) !important;
+    color: var(--navbar-link-hover-color) !important;
 }
 
 .full-background {
@@ -37,13 +85,10 @@ html, body {
     left: 0;
     width: 100%;
     height: 100%;
-    /* IMPORTANT: Replace this with the path to your actual image in public/assets */
     background-image: url('/assets/regisBG.png');
-    /* If you don't have the image yet, use a placeholder: */
-    /* background-image: url('https://placehold.co/1920x1080/4A4A4A/FFFFFF?text=Bookstore+Shelves+Blurred'); */
     background-size: cover;
     background-position: center;
-    filter: brightness(0.7); /* Made background darker for better text contrast */
+    filter: brightness(0.7);
     z-index: -1;
 }
 
@@ -51,9 +96,9 @@ html, body {
 .content-wrapper {
     min-height: 100vh;
     display: flex;
-    flex-direction: column; /* Stack vertically for mobile */
-    justify-content: space-between; /* Push top/bottom sections apart */
-    align-items: center; /* Center horizontally */
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
     padding: 20px;
     box-sizing: border-box;
 }
@@ -63,7 +108,7 @@ html, body {
     text-align: center;
     padding-top: 50px;
     width: 100%;
-    margin-bottom: auto; /* Pushes this section to the top */
+    margin-bottom: auto;
 }
 .top-section h1, .top-section .lead {
     text-shadow: 2px 2px 4px var(--text-shadow-color);
@@ -75,20 +120,20 @@ html, body {
 
 /* Typewriter specific styles - Hidden by default (mobile) */
 .typewriter-container {
-    min-height: 2.5em; /* Reserve space to prevent layout shift */
-    display: none; /* Hidden on mobile */
+    min-height: 2.5em;
+    display: none;
     vertical-align: middle;
     max-width: 90%;
-    margin: 0 auto; /* Center if it becomes block */
+    margin: 0 auto;
 }
 .typewriter-text {
     white-space: nowrap;
     overflow: hidden;
     letter-spacing: .05em;
-    display: inline-block; /* Essential for text to grow horizontally */
+    display: inline-block;
 }
 .typewriter-text.typewriter-blink {
-    border-right: .08em solid var(--primary-text-color); /* White blinking cursor */
+    border-right: .08em solid var(--primary-text-color);
     animation: blink-caret .75s step-end infinite;
 }
 
@@ -102,20 +147,18 @@ html, body {
 .login-register-frame {
     background-color: var(--overlay-background);
     backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px); /* Safari support */
-    width: 90%; /* Take most of the width */
-    max-width: 400px; /* Max width for larger mobiles */
+    -webkit-backdrop-filter: blur(10px);
+    width: 90%;
+    max-width: 400px;
     padding: 30px;
-    border-radius: 15px; /* Fully rounded corners for the frame */
-    box-shadow: 0 4px 20px -5px var(--frame-shadow-color); /* General shadow */
-    margin-top: auto; /* Pushes this section to the bottom */
+    border-radius: 15px;
+    box-shadow: 0 4px 20px -5px var(--frame-shadow-color);
+    margin-top: auto;
     box-sizing: border-box;
-    text-align: center; /* Center content inside frame */
+    text-align: center;
 
-    /* Ensure horizontal centering for mobile */
     margin-left: auto;
     margin-right: auto;
-    /* Added flex properties to ensure internal content is centered */
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -143,37 +186,38 @@ html, body {
     width: 90%;
     text-align: center;
     margin: auto;
+    color: var(--text-color-on-dark); /* Ensure text is readable on forms */
 }
 .form-container-wrapper h2 {
-    color: #fff;
+    color: var(--text-color-on-dark);
     margin-bottom: 25px;
     font-weight: 700;
 }
 .form-control {
-    background-color: rgba(255, 255, 255, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    color: #fff;
+    background-color: var(--card-bg-color); /* Input background based on theme */
+    border: 1px solid var(--border-color-dark);
+    color: var(--text-color-on-dark); /* Input text color based on theme */
     border-radius: 8px;
     padding: 10px 15px;
 }
 .form-control::placeholder {
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--secondary-text-color);
 }
 .form-control:focus {
-    background-color: rgba(255, 255, 255, 0.3);
-    border-color: rgba(255, 255, 255, 0.5);
-    box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.25);
-    color: #fff;
+    background-color: var(--card-bg-color);
+    border-color: var(--navbar-active-link-color); /* Use primary blue for focus */
+    box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25); /* Blue shadow for focus */
+    color: var(--text-color-on-dark);
 }
 .form-label {
-    color: #fff;
+    color: var(--text-color-on-dark);
     font-weight: bold;
     text-align: left;
     width: 100%;
     margin-bottom: 5px;
 }
 .form-text {
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--secondary-text-color);
     text-align: left;
     font-size: 0.85em;
 }
@@ -197,8 +241,8 @@ html, body {
 
 /* Primary Button for forms (Login/Register submit) */
 .btn-primary-form {
-    background-color: rgba(0, 123, 255, 0.7);
-    border-color: rgba(0, 123, 255, 0.8);
+    background-color: #007bff; /* Always blue for primary action */
+    border-color: #007bff;
     border-radius: 8px;
     padding: 10px 20px;
     font-weight: bold;
@@ -206,18 +250,18 @@ html, body {
     color: #fff;
 }
 .btn-primary-form:hover {
-    background-color: rgba(0, 123, 255, 0.9);
-    border-color: rgba(0, 123, 255, 1);
+    background-color: #0056b3;
+    border-color: #0056b3;
     color: #fff;
 }
 
 .link-text {
-    color: #fff;
+    color: var(--navbar-active-link-color); /* Use primary blue for links */
     text-decoration: none;
     font-weight: bold;
 }
 .link-text:hover {
-    color: #007bff;
+    color: #0056b3;
 }
 .alert {
     text-align: left;
@@ -227,18 +271,18 @@ html, body {
 
 /* Custom Navbar Styling */
 .navbar {
-    background-color: var(--navbar-bg) !important; /* Ensure dark background */
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3); /* Subtle shadow for depth */
+    background-color: var(--navbar-bg) !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
 .navbar-brand {
     font-weight: 700;
     font-size: 1.5rem;
-    color: var(--navbar-link-hover-color) !important; /* White brand text */
+    color: var(--navbar-link-hover-color) !important;
     transition: color 0.3s ease;
 }
 .navbar-brand:hover {
-    color: var(--navbar-active-link-color) !important; /* Blue on hover */
+    color: var(--navbar-active-link-color) !important;
 }
 
 .navbar-nav .nav-link {
@@ -251,7 +295,7 @@ html, body {
 .navbar-nav .nav-link:hover,
 .navbar-nav .nav-link:focus {
     color: var(--navbar-link-hover-color) !important;
-    background-color: rgba(255, 255, 255, 0.05); /* Light hover background */
+    background-color: rgba(255, 255, 255, 0.05);
 }
 
 .navbar-nav .nav-item .nav-link.active {
@@ -262,22 +306,26 @@ html, body {
 
 /* Dropdown menu styling */
 .navbar-nav .dropdown-menu {
-    background-color: var(--dropdown-bg);
+    background-color: var(--dropdown-bg); /* Uses theme variable */
     border: none;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
     border-radius: 8px;
 }
 
 .navbar-nav .dropdown-item {
-    color: var(--dropdown-link-color);
+    color: var(--dropdown-link-color); /* Uses theme variable */
     padding: 0.75rem 1rem;
     transition: background-color 0.2s ease;
 }
 
 .navbar-nav .dropdown-item:hover,
 .navbar-nav .dropdown-item:focus {
-    background-color: var(--dropdown-link-hover-bg);
+    background-color: var(--dropdown-link-hover-bg); /* Uses theme variable */
     color: var(--navbar-link-hover-color);
+}
+
+.navbar-nav .dropdown-header {
+    color: var(--dropdown-link-color); /* Ensure header text is visible */
 }
 
 .navbar-text {
@@ -305,7 +353,7 @@ html, body {
     transition: all 0.3s ease;
 }
 .btn-light:hover {
-    background-color: #e2e6ea; /* Slightly darker white */
+    background-color: #e2e6ea;
     color: var(--navbar-bg);
 }
 
@@ -318,69 +366,76 @@ html, body {
     margin-left: 5px;
 }
 
-/* Profile Icon Styling */
-.profile-image-link { /* Changed from .profile-icon-link */
+/* Profile Image Styling */
+.profile-image-link {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0.25rem 0.5rem; /* Adjust padding for image */
+    padding: 0.25rem 0.5rem;
 }
 
-.profile-img { /* New class for the img tag */
-    width: 32px; /* Adjust size as needed */
+.profile-img {
+    width: 32px;
     height: 32px;
-    border-radius: 50%; /* Make it circular */
-    object-fit: cover; /* Ensure image covers the area */
-    border: 2px solid rgba(255, 255, 255, 0.7); /* Subtle white border */
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255, 255, 255, 0.7);
     transition: border-color 0.3s ease;
 }
 
 .profile-image-link:hover .profile-img {
-    border-color: var(--navbar-active-link-color); /* Highlight border on hover */
+    border-color: var(--navbar-active-link-color);
+}
+
+/* Theme Toggle Icon Styling */
+.theme-icon {
+    font-size: 1.2rem;
+    margin-left: 10px;
+    transition: transform 0.3s ease;
+}
+.theme-icon:hover {
+    transform: scale(1.1);
 }
 
 
 /* Desktop Overrides (min-width: 768px) */
 @media (min-width: 768px) {
     .content-wrapper {
-        flex-direction: row; /* Side-by-side for desktop */
-        justify-content: flex-start; /* Align columns to start */
-        padding: 0; /* Remove overall padding for desktop split */
+        flex-direction: row;
+        justify-content: flex-start;
+        padding: 0;
     }
 
-    .row.h-100 { /* Ensure the inner row also takes full height for column alignment */
+    .row.h-100 {
         height: 100%;
     }
 
     .top-section {
-        /* This now becomes the left column */
-        flex: 1; /* Allow it to grow */
-        padding: 50px; /* Restore padding for desktop */
-        margin-bottom: 0; /* Remove auto margin */
-        display: flex; /* Make it a flex container */
-        flex-direction: column; /* Stack children vertically */
-        justify-content: center; /* Vertically center content */
-        align-items: center; /* Horizontally center content */
-        text-align: center; /* Ensure text is centered for desktop */
+        flex: 1;
+        padding: 50px;
+        margin-bottom: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
     }
 
-    /* Show typewriter on desktop */
     .top-section .lead.static-text-slogan {
-        display: none; /* Hide static text on desktop */
+        display: none;
     }
     .typewriter-container {
-        display: inline-block; /* Show typewriter container on desktop */
+        display: inline-block;
     }
 
     .login-register-frame {
-        /* This now becomes the right column */
-        flex: 0 0 33.3333%; /* Bootstrap col-md-4 equivalent */
-        max-width: 33.3333%; /* Bootstrap col-md-4 equivalent */
-        height: 100vh; /* Full viewport height */
-        border-radius: 0; /* No rounded corners for desktop frame */
-        box-shadow: -20px 0 50px -15px var(--frame-shadow-color); /* Subtle shadow on left edge */
-        margin-top: 0; /* Remove auto margin */
-        display: flex; /* Make it a flex container */
+        flex: 0 0 33.3333%;
+        max-width: 33.3333%;
+        height: 100vh;
+        border-radius: 0;
+        box-shadow: -20px 0 50px -15px var(--frame-shadow-color);
+        margin-top: 0;
+        display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
@@ -388,10 +443,9 @@ html, body {
         margin-right: 0;
     }
 
-    /* Override for form-container-wrapper on desktop if it's used as a column */
     body.login-page .form-container-wrapper,
     body.register-page .form-container-wrapper {
-        border-radius: 15px; /* Keep rounded corners for the form itself */
-        margin: auto; /* Center it within its flex parent */
+        border-radius: 15px;
+        margin: auto;
     }
 }

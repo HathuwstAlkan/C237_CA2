@@ -58,8 +58,8 @@
                                 <td><%= u.phone_number || 'N/A' %></td>
                                 <td><%= u.role %></td>
                                 <td>
-                                    <!-- Edit Role button (if implemented) -->
-                                    <!-- <a href="/customers/edit-role/<%= u.customer_id %>" class="btn btn-sm btn-info me-2">Edit Role</a> -->
+                                    <!-- Edit User Button -->
+                                    <a href="/customers/edit/<%= u.customer_id %>" class="btn btn-sm btn-info me-2">Edit</a>
                                     <form action="/customers/delete/<%= u.customer_id %>" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this user?');">
                                         <button type="submit" class="btn btn-sm btn-danger">Delete</button>
                                     </form>

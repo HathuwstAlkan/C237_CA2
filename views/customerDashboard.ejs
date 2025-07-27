@@ -1,32 +1,33 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Dashboard</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Customer Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <!-- Root-level view ⇒ use 'partials/navbar' -->
-  <%- include('partials/navbar') %>
+    <%- include('partials/navbar', { user: user, activePage: 'dashboard' }) %>
 
-  <div class="container py-5">
-    <h1 class="text-center mb-4">Dashboard</h1>
+    <div class="container py-5">
+        <h1 class="text-center mb-4">Customer Dashboard</h1>
 
-    <div class="card shadow-sm mx-auto" style="max-width: 900px;">
-      <div class="card-header bg-dark text-white text-center">
-        Welcome, <%= (user && user.username) ? user.username : 'User' %>!
-      </div>
-      <div class="card-body text-center">
-        <p class="mb-3">
-          Browse books and manage your cart.
-        </p>
-        <a href="/books" class="btn btn-primary">Browse Books</a>
-        <!-- Optional:
-        <a href="/cart/new" class="btn btn-outline-primary ms-2">Add to Cart</a>
-        -->
-      </div>
+        <div class="card shadow-sm mx-auto" style="max-width: 900px;">
+            <div class="card-header bg-dark text-white text-center">
+                Welcome, <%= (user && user.username) ? user.username : 'User' %>!
+            </div>
+            <div class="card-body text-center">
+                <p class="mb-3">
+                    This is your personalized dashboard. Here you can track your pending orders, view past transactions, and manage your account.
+                </p>
+                <a href="/books" class="btn btn-primary">Browse Books</a>
+                <a href="/cart/new" class="btn btn-outline-primary ms-2">Add to Cart</a>
+                <!-- Add more customer-specific links here, e.g., to orders, profile -->
+                <a href="/profile" class="btn btn-outline-secondary ms-2">View Profile</a>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
