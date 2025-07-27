@@ -1,4 +1,4 @@
-/*  Theme Colors */
+/* Theme Colors */
 :root {
     --primary-text-color: rgba(255, 255, 255, 0.85); /* Slightly less subtle white for main text */
     --secondary-text-color: rgba(255, 255, 255, 0.7); /* Slightly less subtle for lead text */
@@ -7,6 +7,17 @@
     --button-hover-bg: rgba(255, 255, 255, 0.15); /* Subtle transparent background on hover */
     --text-shadow-color: rgba(0, 0, 0, 0.8); /* Stronger shadow for readability */
     --frame-shadow-color: rgba(0, 0, 0, 0.4); /* Stronger shadow for the frame */
+
+    /* Navbar Specific Colors */
+    --navbar-bg: #212529; /* Dark background for navbar */
+    --navbar-link-color: rgba(255, 255, 255, 0.75);
+    --navbar-link-hover-color: #ffffff;
+    --navbar-active-link-color: #007bff; /* Bootstrap primary blue for active links */
+    --navbar-active-link-bg: rgba(255, 255, 255, 0.08); /* Subtle background for active links */
+    --dropdown-bg: #343a40; /* Darker dropdown background */
+    --dropdown-link-color: rgba(255, 255, 255, 0.85);
+    --dropdown-link-hover-bg: rgba(255, 255, 255, 0.1);
+    --badge-bg-color: #28a745; /* Green for cart badge */
 }
 
 /* Base Styles (Mobile) */
@@ -14,8 +25,8 @@ html, body {
     height: 100%;
     margin: 0;
     padding: 0;
-    overflow-y: auto;
-    font-family: 'nunito', sans-serif;
+    overflow-y: auto; /* Allow scrolling for content that exceeds viewport height */
+    font-family: 'Nunito', sans-serif; /* Corrected to Nunito */
     color: var(--primary-text-color);
     box-sizing: border-box;
 }
@@ -26,10 +37,12 @@ html, body {
     left: 0;
     width: 100%;
     height: 100%;
+    /* IMPORTANT: Replace this with the path to your actual image in public/assets */
     background-image: url('/assets/regisBG.png');
+    /* If you don't have the image yet, use a placeholder: */
+    /* background-image: url('https://placehold.co/1920x1080/4A4A4A/FFFFFF?text=Bookstore+Shelves+Blurred'); */
     background-size: cover;
     background-position: center;
-    /* Removed CSS blur filter */
     filter: brightness(0.7); /* Made background darker for better text contrast */
     z-index: -1;
 }
@@ -89,12 +102,12 @@ html, body {
 .login-register-frame {
     background-color: var(--overlay-background);
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px); /* Safari support */
     width: 90%; /* Take most of the width */
     max-width: 400px; /* Max width for larger mobiles */
     padding: 30px;
-    /* Changed border-radius to only apply to top corners for "grounded" look */
-    border-radius: 15px 15px 0 0;
-    box-shadow: 0 -5px 20px -5px var(--frame-shadow-color); /* Shadow only at the top edge */
+    border-radius: 15px; /* Fully rounded corners for the frame */
+    box-shadow: 0 4px 20px -5px var(--frame-shadow-color); /* General shadow */
     margin-top: auto; /* Pushes this section to the bottom */
     box-sizing: border-box;
     text-align: center; /* Center content inside frame */
@@ -118,6 +131,53 @@ html, body {
     text-shadow: 1px 1px 2px var(--text-shadow-color);
 }
 
+/* Form container for login/register pages (used by partials/login.ejs and partials/register.ejs) */
+.form-container-wrapper {
+    background-color: var(--overlay-background);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    max-width: 450px;
+    width: 90%;
+    text-align: center;
+    margin: auto;
+}
+.form-container-wrapper h2 {
+    color: #fff;
+    margin-bottom: 25px;
+    font-weight: 700;
+}
+.form-control {
+    background-color: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #fff;
+    border-radius: 8px;
+    padding: 10px 15px;
+}
+.form-control::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+.form-control:focus {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+    box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.25);
+    color: #fff;
+}
+.form-label {
+    color: #fff;
+    font-weight: bold;
+    text-align: left;
+    width: 100%;
+    margin-bottom: 5px;
+}
+.form-text {
+    color: rgba(255, 255, 255, 0.8);
+    text-align: left;
+    font-size: 0.85em;
+}
+
 /* Minimalistic Outline Buttons with Hover Animation */
 .btn-outline-custom {
     border: 2px solid var(--button-border-color);
@@ -125,7 +185,7 @@ html, body {
     background-color: transparent;
     padding: 12px 30px;
     font-size: 1.25rem;
-    border-radius: 5px; /* Not rounded */
+    border-radius: 5px;
     transition: all 0.3s ease, transform 0.3s ease;
 }
 .btn-outline-custom:hover {
@@ -134,6 +194,130 @@ html, body {
     border-color: var(--button-border-color);
     transform: scale(1.05);
 }
+
+/* Primary Button for forms (Login/Register submit) */
+.btn-primary-form {
+    background-color: rgba(0, 123, 255, 0.7);
+    border-color: rgba(0, 123, 255, 0.8);
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    color: #fff;
+}
+.btn-primary-form:hover {
+    background-color: rgba(0, 123, 255, 0.9);
+    border-color: rgba(0, 123, 255, 1);
+    color: #fff;
+}
+
+.link-text {
+    color: #fff;
+    text-decoration: none;
+    font-weight: bold;
+}
+.link-text:hover {
+    color: #007bff;
+}
+.alert {
+    text-align: left;
+    font-size: 0.9em;
+    border-radius: 8px;
+}
+
+/* Custom Navbar Styling */
+.navbar {
+    background-color: var(--navbar-bg) !important; /* Ensure dark background */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3); /* Subtle shadow for depth */
+}
+
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: var(--navbar-link-hover-color) !important; /* White brand text */
+    transition: color 0.3s ease;
+}
+.navbar-brand:hover {
+    color: var(--navbar-active-link-color) !important; /* Blue on hover */
+}
+
+.navbar-nav .nav-link {
+    color: var(--navbar-link-color) !important;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+}
+
+.navbar-nav .nav-link:hover,
+.navbar-nav .nav-link:focus {
+    color: var(--navbar-link-hover-color) !important;
+    background-color: rgba(255, 255, 255, 0.05); /* Light hover background */
+}
+
+.navbar-nav .nav-item .nav-link.active {
+    color: var(--navbar-active-link-color) !important;
+    background-color: var(--navbar-active-link-bg) !important;
+    font-weight: 600;
+}
+
+/* Dropdown menu styling */
+.navbar-nav .dropdown-menu {
+    background-color: var(--dropdown-bg);
+    border: none;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+}
+
+.navbar-nav .dropdown-item {
+    color: var(--dropdown-link-color);
+    padding: 0.75rem 1rem;
+    transition: background-color 0.2s ease;
+}
+
+.navbar-nav .dropdown-item:hover,
+.navbar-nav .dropdown-item:focus {
+    background-color: var(--dropdown-link-hover-bg);
+    color: var(--navbar-link-hover-color);
+}
+
+.navbar-text {
+    color: var(--navbar-link-color) !important;
+    font-weight: 400;
+}
+
+.navbar-text strong {
+    font-weight: 700;
+    color: var(--navbar-link-hover-color) !important;
+}
+
+.btn-outline-light {
+    border-color: var(--navbar-link-color);
+    color: var(--navbar-link-color);
+    transition: all 0.3s ease;
+}
+.btn-outline-light:hover {
+    background-color: var(--navbar-link-color);
+    color: var(--navbar-bg);
+}
+.btn-light {
+    background-color: var(--navbar-link-hover-color);
+    color: var(--navbar-bg);
+    transition: all 0.3s ease;
+}
+.btn-light:hover {
+    background-color: #e2e6ea; /* Slightly darker white */
+    color: var(--navbar-bg);
+}
+
+/* Cart badge styling */
+.navbar-nav .badge {
+    background-color: var(--badge-bg-color) !important;
+    font-size: 0.75em;
+    padding: 0.3em 0.6em;
+    border-radius: 10px;
+    margin-left: 5px;
+}
+
 
 /* Desktop Overrides (min-width: 768px) */
 @media (min-width: 768px) {
@@ -176,10 +360,17 @@ html, body {
         box-shadow: -20px 0 50px -15px var(--frame-shadow-color); /* Subtle shadow on left edge */
         margin-top: 0; /* Remove auto margin */
         display: flex; /* Make it a flex container */
-        flex-direction: column; /* Stack children vertically */
-        justify-content: center; /* Vertically center content */
-        align-items: center; /* Horizontally center content */
-        margin-left: 0; /* Remove auto margins for desktop */
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        margin-left: 0;
         margin-right: 0;
+    }
+
+    /* Override for form-container-wrapper on desktop if it's used as a column */
+    body.login-page .form-container-wrapper,
+    body.register-page .form-container-wrapper {
+        border-radius: 15px; /* Keep rounded corners for the form itself */
+        margin: auto; /* Center it within its flex parent */
     }
 }

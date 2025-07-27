@@ -1,0 +1,89 @@
+<!-- views/partials/_navbar.ejs -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+        <!-- Brand Link: Always redirects to the registration/home page -->
+        <a class="navbar-brand" href="/">RP Bookstore</a>
+
+        <!-- Toggler for mobile navigation -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Navbar Collapse Content -->
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <% if (user) { %>
+                    <!-- Dashboard Tab (Dynamic based on role) -->
+                    <li class="nav-item">
+                        <a class="nav-link <%= typeof activePage !== 'undefined' && activePage === 'dashboard' ? 'active' : '' %>"
+                           href="<%= user.role === 'admin' ? '/admin' : '/dashboard' %>">
+                            Dashboard
+                        </a>
+                    </li>
+                    <!-- Discover Tab (Books) -->
+                    <li class="nav-item">
+                        <a class="nav-link <%= typeof activePage !== 'undefined' && activePage === 'books' ? 'active' : '' %>" href="/books">
+                            Discover
+                        </a>
+                    </li>
+                    <!-- Admin-specific links -->
+                    <% if (user.role === 'admin') { %>
+                        <li class="nav-item">
+                            <a class="nav-link <%= typeof activePage !== 'undefined' && activePage === 'customers' ? 'active' : '' %>" href="/customers">
+                                Customers
+                            </a>
+                        </li>
+                    <% } %>
+                <% } else { %>
+                    <!-- Public Home Link (for logged out users) -->
+                    <li class="nav-item">
+                        <a class="nav-link <%= typeof activePage !== 'undefined' && activePage === 'home' ? 'active' : '' %>" aria-current="page" href="/">Home</a>
+                    </li>
+                <% } %>
+            </ul>
+
+            <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center">
+                <% if (user) { %>
+                    <!-- Cart Icon for Regular Users -->
+                    <% if (user.role === 'regular') { %>
+                        <li class="nav-item me-2">
+                            <a class="nav-link" href="#" title="Cart">🛒
+                                <% if (typeof cartCount !== 'undefined' && cartCount > 0) { %>
+                                    <span class="badge rounded-pill bg-success align-text-top"><%= cartCount %></span>
+                                <% } %>
+                            </a>
+                        </li>
+                    <% } %>
+                    <!-- "View Site" link for Admins -->
+                    <% if (user.role === 'admin') { %>
+                        <li class="nav-item me-3">
+                            <a class="nav-link" href="/books" title="View Public Site">View Site</a>
+                        </li>
+                    <% } %>
+
+                    <!-- Profile Dropdown -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Profile
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                            <li><h6 class="dropdown-header">Logged in as: <%= user.username %></h6></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/profile">View Profile</a></li>
+                            <li><a class="dropdown-item" href="/logout">Logout</a></li>
+                        </ul>
+                    </li>
+                <% } else { %>
+                    <!-- Login/Sign Up buttons when logged out -->
+                    <li class="nav-item">
+                        <a class="btn btn-outline-light btn-sm me-2" href="/partials/login">Login</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-light btn-sm" href="/partials/register">Sign Up</a>
+                    </li>
+                <% } %>
+            </ul>
+        </div>
+    </div>
+</nav>
