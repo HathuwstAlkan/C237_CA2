@@ -1,95 +1,61 @@
-<!-- views/partials/navbar.ejs -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container-fluid">
-        <!-- Brand Link: Dynamic based on user login/role -->
-        <a class="navbar-brand" href="<%= user ? '/dashboard' : '/' %>">
-            RP Bookstore<%= user && user.role === 'admin' ? ' Admin' : '' %>
-        </a>
+  <div class="container">
+    <a class="navbar-brand" href="<%= user ? '/books' : '/' %>">BookStore</a>
 
-        <!-- Toggler for mobile navigation -->
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#topNav"
+            aria-controls="topNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
 
-        <!-- Navbar Collapse Content -->
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <% if (user) { %>
-                    <!-- Discover Tab (Books) -->
-                    <li class="nav-item">
-                        <a class="nav-link <%= typeof activePage !== 'undefined' && activePage === 'books' ? 'active' : '' %>" href="/books">
-                            Discover
-                        </a>
-                    </li>
-                    <!-- Admin-specific links -->
-                    <% if (user.role === 'admin') { %>
-                        <li class="nav-item">
-                            <a class="nav-link <%= typeof activePage !== 'undefined' && activePage === 'customers' ? 'active' : '' %>" href="/customers">
-                                Customers
-                            </a>
-                        </li>
-                    <% } %>
-                <% } else { %>
-                    <!-- Public Home Link (for logged out users) -->
-                    <li class="nav-item">
-                        <a class="nav-link <%= typeof activePage !== 'undefined' && activePage === 'home' ? 'active' : '' %>" aria-current="page" href="/">Home</a>
-                    </li>
-                <% } %>
-            </ul>
+    <div class="collapse navbar-collapse" id="topNav">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link <%= activePage==='books' ? 'active' : '' %>" href="/books">Books</a>
+        </li>
 
-            <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center">
-                <% if (user) { %>
-                    <!-- Cart Icon for Regular Users -->
-                    <% if (user.role === 'regular') { %>
-                        <li class="nav-item me-2">
-                            <a class="nav-link" href="#" title="Cart">🛒
-                                <% if (typeof cartCount !== 'undefined' && cartCount > 0) { %>
-                                    <span class="badge rounded-pill bg-success align-text-top"><%= cartCount %></span>
-                                <% } %>
-                            </a>
-                        </li>
-                    <% } %>
-                    <!-- "View Site" dropdown for Admins -->
-                    <% if (user.role === 'admin') { %>
-                        <li class="nav-item dropdown me-3">
-                            <a class="nav-link dropdown-toggle" href="#" id="viewDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                View
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="viewDropdown">
-                                <li><h6 class="dropdown-header">Switch View</h6></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="/books">Customer View</a></li>
-                                <li><a class="dropdown-item" href="/admin">Admin View</a></li>
-                            </ul>
-                        </li>
-                    <% } %>
+        <% if (user) { %>
+          <li class="nav-item">
+            <a class="nav-link <%= activePage==='dashboard' ? 'active' : '' %>" href="/dashboard">Dashboard</a>
+          </li>
+        <% } %>
 
-                    <!-- Profile Dropdown (now with image) -->
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle profile-image-link" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <!-- Placeholder for profile image. User will upload 'profile_headshot.png' to public/assets -->
-                            <img src="/assets/profile_headshot.png" onerror="this.onerror=null;this.src='https://placehold.co/50x50/E0E0E0/333333?text=Profile';" alt="Profile" class="profile-img">
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                            <li><h6 class="dropdown-header">Logged in as: <%= user.username %></h6></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="/profile">View Profile</a></li>
-                            <li><a class="dropdown-item" href="/partials/login">Quick Login</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="/logout">Logout</a></li>
-                        </ul>
-                    </li>
-                <% } else { %>
-                    <!-- Login/Sign Up buttons when logged out -->
-                    <li class="nav-item">
-                        <a class="btn btn-outline-light btn-sm me-2" href="/partials/login">Login</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="btn btn-light btn-sm" href="/partials/register">Sign Up</a>
-                    </li>
-                <% } %>
-            </ul>
-        </div>
+        <% if (user && user.role === 'admin') { %>
+          <li class="nav-item">
+            <a class="nav-link <%= activePage==='admin' ? 'active' : '' %>" href="/admin">Admin</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link <%= activePage==='customers' ? 'active' : '' %>" href="/customers">Customers</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link <%= activePage==='stocks' ? 'active' : '' %>" href="/admin/stocks">Stocks</a>
+          </li>
+        <% } %>
+      </ul>
+
+      <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center">
+        <% if (user) { %>
+          <li class="nav-item me-2">
+            <a class="nav-link" href="/dashboard" title="Cart">🛒
+              <% if (typeof cartCount !== 'undefined') { %>
+                <span class="badge bg-success align-text-top"><%= cartCount %></span>
+              <% } %>
+            </a>
+          </li>
+          <li class="nav-item">
+            <span class="navbar-text me-3">Hi, <strong><%= user.username %></strong></span>
+          </li>
+          <li class="nav-item">
+            <a class="btn btn-outline-light btn-sm" href="/logout">Logout</a>
+          </li>
+        <% } else { %>
+          <li class="nav-item">
+            <a class="btn btn-outline-light btn-sm me-2" href="/">Login</a>
+          </li>
+          <li class="nav-item">
+            <a class="btn btn-primary btn-sm" href="/">Sign Up</a>
+          </li>
+        <% } %>
+      </ul>
     </div>
+  </div>
 </nav>

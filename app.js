@@ -49,6 +49,7 @@ app.use((req, res, next) => {
     const p = req.path;
     res.locals.activePage =
         p.startsWith('/books') ? 'books' :
+        p.startsWith('/admin/stocks') ? 'stocks' :
         p.startsWith('/admin') ? 'admin' :
         p.startsWith('/customers') ? 'customers' :
         p.startsWith('/dashboard') ? 'dashboard' : '';
@@ -596,6 +597,193 @@ app.get('/books/:id', async (req, res) => {
         req.flash('error', 'Could not load book.');
         res.redirect('/books');
     }
+});
+
+// ==============================
+// Admin: Stocks - LIST (with search)
+// ==============================
+app.get('/admin/stocks', checkAuthenticated, checkAdmin, async (req, res) => {
+  try {
+    const { search = '' } = req.query;
+
+    let sql = `
+      SELECT s.book_id, s.publisher_id, s.quantity,
+             b.title, b.image_url,
+             p.name AS publisher_name
+      FROM Stocks s
+      JOIN Books b ON b.book_id = s.book_id
+      JOIN Publishers p ON p.publisher_id = s.publisher_id
+      WHERE 1=1`;
+    const params = [];
+
+    if (search) {
+      const term = `%${search}%`;
+      sql += ` AND (b.title LIKE ? OR p.name LIKE ?)`;
+      params.push(term, term);
+    }
+
+    sql += ` ORDER BY b.title ASC, p.name ASC`;
+
+    const [stocks] = await db.query(sql, params);
+
+    res.render('admin/stocks/index', {
+      user: req.session.user,
+      stocks,
+      q: { search }
+    });
+  } catch (err) {
+    console.error('Error listing stocks:', err);
+    req.flash('error', 'Could not load stocks.');
+    res.redirect('/admin');
+  }
+});
+
+// ==============================
+// Admin: Stocks - NEW form
+// ==============================
+app.get('/admin/stocks/new', checkAuthenticated, checkAdmin, async (req, res) => {
+  try {
+    const [books] = await db.query('SELECT book_id, title FROM Books ORDER BY title ASC');
+    const [publishers] = await db.query('SELECT publisher_id, name FROM Publishers ORDER BY name ASC');
+
+    res.render('admin/stocks/new', {
+      user: req.session.user,
+      books,
+      publishers,
+      formData: {},
+      errors: req.flash('error'),
+      messages: req.flash('success')
+    });
+  } catch (err) {
+    console.error('Error loading new stock form:', err);
+    req.flash('error', 'Could not load stock form.');
+    res.redirect('/admin/stocks');
+  }
+});
+
+// ==============================
+// Admin: Stocks - CREATE
+// ==============================
+app.post('/admin/stocks', checkAuthenticated, checkAdmin, async (req, res) => {
+  try {
+    const { book_id, publisher_id, quantity } = req.body;
+    const errors = [];
+
+    if (!book_id || !publisher_id) errors.push('Book and Publisher are required.');
+    if (quantity === undefined || quantity === null || isNaN(quantity) || Number(quantity) < 0) {
+      errors.push('Quantity must be a non-negative number.');
+    }
+
+    if (errors.length) {
+      req.flash('error', errors);
+      return res.redirect('/admin/stocks/new');
+    }
+
+    await db.query(
+      'INSERT INTO Stocks (book_id, publisher_id, quantity) VALUES (?, ?, ?)',
+      [parseInt(book_id), parseInt(publisher_id), parseInt(quantity)]
+    );
+
+    req.flash('success', 'Stock entry created.');
+    res.redirect('/admin/stocks');
+  } catch (err) {
+    console.error('Error creating stock:', err);
+    if (err.code === 'ER_DUP_ENTRY') {
+      req.flash('error', 'That book already has a stock entry for this publisher. Use Edit instead.');
+    } else {
+      req.flash('error', 'Failed to create stock entry.');
+    }
+    res.redirect('/admin/stocks/new');
+  }
+});
+
+// ==============================
+// Admin: Stocks - EDIT form
+// ==============================
+app.get('/admin/stocks/:book_id/:publisher_id/edit', checkAuthenticated, checkAdmin, async (req, res) => {
+  try {
+    const { book_id, publisher_id } = req.params;
+
+    const [rows] = await db.query(
+      `SELECT s.book_id, s.publisher_id, s.quantity,
+              b.title, p.name AS publisher_name
+       FROM Stocks s
+       JOIN Books b ON b.book_id = s.book_id
+       JOIN Publishers p ON p.publisher_id = s.publisher_id
+       WHERE s.book_id = ? AND s.publisher_id = ?
+       LIMIT 1`,
+      [book_id, publisher_id]
+    );
+
+    if (!rows.length) {
+      req.flash('error', 'Stock entry not found.');
+      return res.redirect('/admin/stocks');
+    }
+
+    res.render('admin/stocks/edit', {
+      user: req.session.user,
+      stock: rows[0],
+      errors: req.flash('error'),
+      messages: req.flash('success')
+    });
+  } catch (err) {
+    console.error('Error loading stock edit form:', err);
+    req.flash('error', 'Could not load stock edit form.');
+    res.redirect('/admin/stocks');
+  }
+});
+
+// ==============================
+// Admin: Stocks - UPDATE
+// ==============================
+app.post('/admin/stocks/:book_id/:publisher_id/edit', checkAuthenticated, checkAdmin, async (req, res) => {
+  try {
+    const { book_id, publisher_id } = req.params;
+    const { quantity } = req.body;
+
+    const q = parseInt(quantity);
+    if (isNaN(q) || q < 0) {
+      req.flash('error', 'Quantity must be a non-negative number.');
+      return res.redirect(`/admin/stocks/${book_id}/${publisher_id}/edit`);
+    }
+
+    await db.query(
+      'UPDATE Stocks SET quantity = ? WHERE book_id = ? AND publisher_id = ?',
+      [q, parseInt(book_id), parseInt(publisher_id)]
+    );
+
+    req.flash('success', 'Stock updated.');
+    res.redirect('/admin/stocks');
+  } catch (err) {
+    console.error('Error updating stock:', err);
+    req.flash('error', 'Failed to update stock.');
+    res.redirect(`/admin/stocks/${req.params.book_id}/${req.params.publisher_id}/edit`);
+  }
+});
+
+// ==============================
+// Admin: Stocks - DELETE
+// ==============================
+app.post('/admin/stocks/:book_id/:publisher_id/delete', checkAuthenticated, checkAdmin, async (req, res) => {
+  try {
+    const { book_id, publisher_id } = req.params;
+
+    const [result] = await db.query(
+      'DELETE FROM Stocks WHERE book_id = ? AND publisher_id = ?',
+      [parseInt(book_id), parseInt(publisher_id)]
+    );
+
+    if (result.affectedRows === 0) {
+      req.flash('error', 'Stock entry not found.');
+    } else {
+      req.flash('success', 'Stock entry deleted.');
+    }
+    res.redirect('/admin/stocks');
+  } catch (err) {
+    console.error('Error deleting stock:', err);
+    req.flash('error', 'Failed to delete stock.');
+    res.redirect('/admin/stocks');
+  }
 });
 
 /* ==============================
