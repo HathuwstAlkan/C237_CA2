@@ -1,5 +1,3 @@
-'use strict';
-
 const express = require('express');
 const path = require('path');
 const mysql = require('mysql2/promise');
@@ -13,14 +11,11 @@ const app = express();
    Database connection (pool)
    ============================== */
 const db = mysql.createPool({
-  host: '29vx1m.h.filess.io',
-  user: 'C237CA2_paidplant',
-  password: '3c01197c427f182364f4461deb0613ea96517367',
-  database: 'C237CA2_paidplant',
-  port: 61002,
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
+  host: 'c237-all.mysql.database.azure.com',
+  user: 'c237admin',
+  password: 'c2372025!',
+  database: 'c237_004_24026438',
+  port: 3306,
 });
 
 /* ==============================
@@ -62,12 +57,12 @@ app.use((req, res, next) => {
   next();
 });
 
-// Cart count (optional)
+// cart count (optional)
 app.use(async (req, res, next) => {
   try {
     if (!req.session.user) { res.locals.cartCount = 0; return next(); }
     const [r] = await db.query(
-      'SELECT COALESCE(SUM(quantity),0) AS cnt FROM Cart WHERE customer_id = ?',
+      'SELECT COALESCE(SUM(quantity),0) AS cnt FROM cart WHERE customer_id = ?',
       [req.session.user.customer_id]
     );
     res.locals.cartCount = (r[0] && r[0].cnt) || 0;
@@ -159,7 +154,7 @@ app.post('/register', async (req, res) => {
     const password_hash = await bcrypt.hash(password, 10);
 
     await db.query(
-      `INSERT INTO Customers
+      `INSERT INTO customers
        (username, password_hash, role, first_name, last_name, email, phone_number, address)
        VALUES (?, ?, 'regular', ?, ?, ?, ?, ?)`,
       [username, password_hash, first_name, last_name, email, phone || null, address || null]
@@ -191,7 +186,7 @@ app.post('/login', async (req, res) => {
     }
 
     const [rows] = await db.query(
-      'SELECT customer_id, username, first_name, last_name, email, phone_number, address, role, password_hash FROM Customers WHERE email = ?',
+      'SELECT customer_id, username, first_name, last_name, email, phone_number, address, role, password_hash FROM customers WHERE email = ?',
       [email]
     );
     if (!rows || rows.length === 0) {
@@ -239,11 +234,11 @@ app.get('/admin', checkAuthenticated, checkAdmin, (req, res) => {
   return res.render('adminDashboard', { user: req.session.user });
 });
 
-// Customers admin list
+// customers admin list
 app.get('/customers', checkAuthenticated, checkAdmin, async (req, res) => {
   try {
     const [users] = await db.query(
-      'SELECT customer_id, username, first_name, last_name, email, phone_number, role FROM Customers'
+      'SELECT customer_id, username, first_name, last_name, email, phone_number, role FROM customers'
     );
     // NOTE: Ensure you have views/customerList.ejs. If not, change to res.json(users)
     res.render('admin/customerList', {
@@ -262,7 +257,7 @@ app.get('/customers', checkAuthenticated, checkAdmin, async (req, res) => {
 app.post('/customers/delete/:id', checkAuthenticated, checkAdmin, async (req, res) => {
   const userId = req.params.id;
   try {
-    const [result] = await db.query('DELETE FROM Customers WHERE customer_id = ?', [userId]);
+    const [result] = await db.query('DELETE FROM customers WHERE customer_id = ?', [userId]);
     if (result.affectedRows === 0) {
       req.flash('error', 'User (customer) not found.');
       return res.status(404).redirect('/customers');
@@ -283,7 +278,7 @@ app.get('/admin/books/:id', checkAuthenticated, checkAdmin, async (req, res) => 
 
     const [rows] = await db.query(
       `SELECT book_id, title, author, isbn, genre, price, published_year, published_date, image_url, description
-       FROM Books WHERE book_id = ? LIMIT 1`,
+       FROM books WHERE book_id = ? LIMIT 1`,
       [id]
     );
     if (!rows.length) {
@@ -295,7 +290,7 @@ app.get('/admin/books/:id', checkAuthenticated, checkAdmin, async (req, res) => 
     // Related books: same genre, exclude current
     const [related] = await db.query(
       `SELECT book_id, title, author, price, image_url
-       FROM Books WHERE genre <=> ? AND book_id <> ? ORDER BY title ASC LIMIT 6`,
+       FROM books WHERE genre <=> ? AND book_id <> ? ORDER BY title ASC LIMIT 6`,
       [book.genre, id]
     );
 
@@ -311,10 +306,10 @@ app.get('/admin/books/:id', checkAuthenticated, checkAdmin, async (req, res) => 
   }
 });
 
-// Cart routes
+// cart routes
 app.get('/cart/new', checkAuthenticated, async (req, res) => {
   try {
-    const [books] = await db.query('SELECT book_id, title FROM Books');
+    const [books] = await db.query('SELECT book_id, title FROM books');
     res.render('create_cart_item', {
       user: req.session.user,
       books,
@@ -332,7 +327,7 @@ app.post('/cart', checkAuthenticated, async (req, res) => {
   const customer_id = req.session.user.customer_id;
   try {
     await db.query(
-      'INSERT INTO Cart (customer_id, book_id, quantity) VALUES (?, ?, ?)',
+      'INSERT INTO cart (customer_id, book_id, quantity) VALUES (?, ?, ?)',
       [customer_id, book_id, quantity]
     );
     req.flash('success', 'Book added to cart successfully!');
@@ -349,14 +344,14 @@ app.post('/cart/delete/:id', checkAuthenticated, async (req, res) => {
   const customerId = req.session.user.customer_id;
   try {
     const [result] = await db.query(
-      'DELETE FROM Cart WHERE cart_item_id = ? AND customer_id = ?',
+      'DELETE FROM cart WHERE cart_item_id = ? AND customer_id = ?',
       [cartItemId, customerId]
     );
     if (result.affectedRows === 0) {
-      req.flash('error', 'Cart item not found or you do not have permission to delete it.');
+      req.flash('error', 'cart item not found or you do not have permission to delete it.');
       return res.status(404).redirect('/dashboard');
     }
-    req.flash('success', 'Cart item deleted successfully!');
+    req.flash('success', 'cart item deleted successfully!');
     res.redirect('/dashboard');
   } catch (err) {
     console.error('Error deleting cart item:', err);
@@ -366,7 +361,7 @@ app.post('/cart/delete/:id', checkAuthenticated, async (req, res) => {
 });
 
 // ==============================
-// Books: LIST with search/filter/sort
+// books: LIST with search/filter/sort
 // Public: viewable by all
 // ==============================
 app.get('/books', async (req, res) => {
@@ -374,7 +369,7 @@ app.get('/books', async (req, res) => {
     const { search = '', genre = '', sort = 'title_asc' } = req.query;
 
     let sql = `SELECT book_id, title, author, isbn, genre, price, published_year, published_date, image_url
-               FROM Books WHERE 1=1`;
+               FROM books WHERE 1=1`;
     const params = [];
 
     if (search) {
@@ -401,7 +396,7 @@ app.get('/books', async (req, res) => {
     sql += orderBy;
 
     const [books] = await db.query(sql, params);
-    const [genresRows] = await db.query(`SELECT DISTINCT genre FROM Books WHERE genre IS NOT NULL AND genre <> '' ORDER BY genre ASC`);
+    const [genresRows] = await db.query(`SELECT DISTINCT genre FROM books WHERE genre IS NOT NULL AND genre <> '' ORDER BY genre ASC`);
     const genres = ['All', ...genresRows.map(r => r.genre)];
 
     res.render('books/index', {
@@ -418,7 +413,7 @@ app.get('/books', async (req, res) => {
 });
 
 // ==============================
-// Books: NEW form (admin only)
+// books: NEW form (admin only)
 // ==============================
 app.get('/books/new', checkAuthenticated, checkAdmin, async (req, res) => {
   res.render('books/new', {
@@ -430,7 +425,7 @@ app.get('/books/new', checkAuthenticated, checkAdmin, async (req, res) => {
 });
 
 // ==============================
-// Books: CREATE (admin only)
+// books: CREATE (admin only)
 // ==============================
 app.post('/books', checkAuthenticated, checkAdmin, async (req, res) => {
   try {
@@ -449,7 +444,7 @@ app.post('/books', checkAuthenticated, checkAdmin, async (req, res) => {
     }
 
     await db.query(
-      `INSERT INTO Books (title, author, isbn, genre, price, published_year, published_date, image_url, description)
+      `INSERT INTO books (title, author, isbn, genre, price, published_year, published_date, image_url, description)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         title, author, isbn || null, genre || null,
@@ -475,14 +470,14 @@ app.post('/books', checkAuthenticated, checkAdmin, async (req, res) => {
 });
 
 // ==============================
-// Books: EDIT form (admin only)
+// books: EDIT form (admin only)
 // ==============================
 app.get('/books/:id/edit', checkAuthenticated, checkAdmin, async (req, res) => {
   try {
     const id = req.params.id;
     const [rows] = await db.query(
       `SELECT book_id, title, author, isbn, genre, price, published_year, published_date, image_url, description
-       FROM Books WHERE book_id = ? LIMIT 1`, [id]
+       FROM books WHERE book_id = ? LIMIT 1`, [id]
     );
     if (!rows.length) {
       req.flash('error', 'Book not found.');
@@ -502,7 +497,7 @@ app.get('/books/:id/edit', checkAuthenticated, checkAdmin, async (req, res) => {
 });
 
 // ==============================
-// Books: UPDATE (admin only)
+// books: UPDATE (admin only)
 // ==============================
 app.post('/books/:id/edit', checkAuthenticated, checkAdmin, async (req, res) => {
   try {
@@ -522,7 +517,7 @@ app.post('/books/:id/edit', checkAuthenticated, checkAdmin, async (req, res) => 
     }
 
     await db.query(
-      `UPDATE Books
+      `UPDATE books
        SET title = ?, author = ?, isbn = ?, genre = ?, price = ?, published_year = ?, published_date = ?, image_url = ?, description = ?
        WHERE book_id = ?`,
       [
@@ -550,15 +545,15 @@ app.post('/books/:id/edit', checkAuthenticated, checkAdmin, async (req, res) => 
 });
 
 // ==============================
-// Books: DELETE (admin only)
+// books: DELETE (admin only)
 // ==============================
 app.post('/books/:id/delete', checkAuthenticated, checkAdmin, async (req, res) => {
   const id = req.params.id;
   try {
     // Remove dependents first due to FKs
-    await db.query('DELETE FROM Stocks WHERE book_id = ?', [id]);
-    await db.query('DELETE FROM Cart WHERE book_id = ?', [id]);
-    await db.query('DELETE FROM Books WHERE book_id = ?', [id]);
+    await db.query('DELETE FROM stocks WHERE book_id = ?', [id]);
+    await db.query('DELETE FROM cart WHERE book_id = ?', [id]);
+    await db.query('DELETE FROM books WHERE book_id = ?', [id]);
 
     req.flash('success', 'Book deleted.');
     res.redirect('/books');
@@ -570,7 +565,7 @@ app.post('/books/:id/delete', checkAuthenticated, checkAdmin, async (req, res) =
 });
 
 // ==============================
-// Books: SHOW (individual book)
+// books: SHOW (individual book)
 // Public: viewable by all
 // ==============================
 app.get('/books/:id', async (req, res) => {
@@ -578,7 +573,7 @@ app.get('/books/:id', async (req, res) => {
     const id = req.params.id;
     const [rows] = await db.query(
       `SELECT book_id, title, author, isbn, genre, price, published_year, published_date, image_url, description
-       FROM Books WHERE book_id = ? LIMIT 1`, [id]
+       FROM books WHERE book_id = ? LIMIT 1`, [id]
     );
     if (!rows.length) {
       req.flash('error', 'Book not found.');
@@ -589,7 +584,7 @@ app.get('/books/:id', async (req, res) => {
     // Related books: same genre, not the same book
     const [related] = await db.query(
       `SELECT book_id, title, author, price, image_url
-       FROM Books WHERE genre <=> ? AND book_id <> ? ORDER BY title ASC LIMIT 6`,
+       FROM books WHERE genre <=> ? AND book_id <> ? ORDER BY title ASC LIMIT 6`,
       [book.genre, id]
     );
 
