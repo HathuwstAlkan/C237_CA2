@@ -51,6 +51,32 @@ app.use((req, res, next) => {
   next();
 });
 
+// Optional: auto-set activePage by path
+app.use((req, res, next) => {
+  const p = req.path;
+  res.locals.activePage =
+    p.startsWith('/books') ? 'books' :
+    p.startsWith('/admin') ? 'admin' :
+    p.startsWith('/customers') ? 'customers' :
+    p.startsWith('/dashboard') ? 'dashboard' :
+    '';
+  next();
+});
+
+// Optional: cart item count (comment out if you prefer not to query each request)
+app.use(async (req, res, next) => {
+  try {
+    if (!req.session.user) { res.locals.cartCount = 0; return next(); }
+    const [r] = await db.query('SELECT COALESCE(SUM(quantity),0) AS cnt FROM Cart WHERE customer_id = ?', [req.session.user.customer_id]);
+    res.locals.cartCount = (r[0] && r[0].cnt) || 0;
+    next();
+  } catch (e) {
+    console.error('cartCount middleware error:', e);
+    res.locals.cartCount = 0;
+    next();
+  }
+});
+
 /* ==============================
    Auth helpers
    ============================== */
@@ -299,6 +325,246 @@ app.post('/cart/delete/:id', checkAuthenticated, async (req, res) => {
     console.error('Error deleting cart item:', err);
     req.flash('error', 'Error deleting cart item.');
     res.status(500).redirect('/dashboard');
+  }
+});
+
+// ==============================
+// Books: LIST with search/filter/sort
+// Public: viewable by all
+// ==============================
+app.get('/books', async (req, res) => {
+  try {
+    const { search = '', genre = '', sort = 'title_asc' } = req.query;
+
+    let sql = `SELECT book_id, title, author, isbn, genre, price, published_year, published_date, image_url
+               FROM Books WHERE 1=1`;
+    const params = [];
+
+    if (search) {
+      const term = `%${search}%`;
+      sql += ` AND (title LIKE ? OR author LIKE ? OR isbn LIKE ?)`;
+      params.push(term, term, term);
+    }
+    if (genre && genre !== 'All') {
+      sql += ` AND genre = ?`;
+      params.push(genre);
+    }
+
+    // Sorting
+    let orderBy = ' ORDER BY title ASC';
+    switch (sort) {
+      case 'title_desc': orderBy = ' ORDER BY title DESC'; break;
+      case 'author_asc': orderBy = ' ORDER BY author ASC'; break;
+      case 'author_desc': orderBy = ' ORDER BY author DESC'; break;
+      case 'year_desc': orderBy = ' ORDER BY published_year DESC'; break;
+      case 'year_asc': orderBy = ' ORDER BY published_year ASC'; break;
+      case 'price_asc': orderBy = ' ORDER BY price ASC'; break;
+      case 'price_desc': orderBy = ' ORDER BY price DESC'; break;
+    }
+    sql += orderBy;
+
+    const [books] = await db.query(sql, params);
+    const [genresRows] = await db.query(`SELECT DISTINCT genre FROM Books WHERE genre IS NOT NULL AND genre <> '' ORDER BY genre ASC`);
+    const genres = ['All', ...genresRows.map(r => r.genre)];
+
+    res.render('books/index', {
+      user: req.session.user,
+      books,
+      genres,
+      q: { search, genre, sort }
+    });
+  } catch (err) {
+    console.error('Error listing books:', err);
+    req.flash('error', 'Could not load books.');
+    res.redirect('/dashboard');
+  }
+});
+
+// ==============================
+// Books: NEW form (admin only)
+// ==============================
+app.get('/books/new', checkAuthenticated, checkAdmin, async (req, res) => {
+  res.render('books/new', {
+    user: req.session.user,
+    formData: {},
+    errors: req.flash('error'),
+    messages: req.flash('success')
+  });
+});
+
+// ==============================
+// Books: CREATE (admin only)
+// ==============================
+app.post('/books', checkAuthenticated, checkAdmin, async (req, res) => {
+  try {
+    const { title, author, isbn, genre, price, published_year, published_date, image_url, description } = req.body;
+    const errors = [];
+
+    if (!title || !author || !isbn || !price) errors.push('Title, author, ISBN, and price are required.');
+    if (price && isNaN(price)) errors.push('Price must be a number.');
+    if (published_year && (isNaN(published_year) || published_year < 1500 || published_year > (new Date().getFullYear()+1))) {
+      errors.push('Published year is invalid.');
+    }
+
+    if (errors.length) {
+      req.flash('error', errors);
+      return res.redirect('/books/new');
+    }
+
+    await db.query(
+      `INSERT INTO Books (title, author, isbn, genre, price, published_year, published_date, image_url, description)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        title, author, isbn || null, genre || null,
+        parseFloat(price),
+        published_year ? parseInt(published_year) : null,
+        published_date || null,
+        image_url || null,
+        description || null
+      ]
+    );
+
+    req.flash('success', 'Book created.');
+    res.redirect('/books');
+  } catch (err) {
+    console.error('Error creating book:', err);
+    if (err.code === 'ER_DUP_ENTRY') {
+      req.flash('error', 'ISBN already exists.');
+    } else {
+      req.flash('error', 'Failed to create book.');
+    }
+    res.redirect('/books/new');
+  }
+});
+
+// ==============================
+// Books: EDIT form (admin only)
+// ==============================
+app.get('/books/:id/edit', checkAuthenticated, checkAdmin, async (req, res) => {
+  try {
+    const id = req.params.id;
+    const [rows] = await db.query(
+      `SELECT book_id, title, author, isbn, genre, price, published_year, published_date, image_url, description
+       FROM Books WHERE book_id = ? LIMIT 1`, [id]
+    );
+    if (!rows.length) {
+      req.flash('error', 'Book not found.');
+      return res.redirect('/books');
+    }
+    res.render('books/edit', {
+      user: req.session.user,
+      book: rows[0],
+      errors: req.flash('error'),
+      messages: req.flash('success')
+    });
+  } catch (err) {
+    console.error('Error loading edit form:', err);
+    req.flash('error', 'Could not load edit form.');
+    res.redirect('/books');
+  }
+});
+
+// ==============================
+// Books: UPDATE (admin only)
+// ==============================
+app.post('/books/:id/edit', checkAuthenticated, checkAdmin, async (req, res) => {
+  try {
+    const id = req.params.id;
+    const { title, author, isbn, genre, price, published_year, published_date, image_url, description } = req.body;
+    const errors = [];
+
+    if (!title || !author || !isbn || !price) errors.push('Title, author, ISBN, and price are required.');
+    if (price && isNaN(price)) errors.push('Price must be a number.');
+    if (published_year && (isNaN(published_year) || published_year < 1500 || published_year > (new Date().getFullYear()+1))) {
+      errors.push('Published year is invalid.');
+    }
+
+    if (errors.length) {
+      req.flash('error', errors);
+      return res.redirect(`/books/${id}/edit`);
+    }
+
+    await db.query(
+      `UPDATE Books
+       SET title = ?, author = ?, isbn = ?, genre = ?, price = ?, published_year = ?, published_date = ?, image_url = ?, description = ?
+       WHERE book_id = ?`,
+      [
+        title, author, isbn || null, genre || null,
+        parseFloat(price),
+        published_year ? parseInt(published_year) : null,
+        published_date || null,
+        image_url || null,
+        description || null,
+        id
+      ]
+    );
+
+    req.flash('success', 'Book updated.');
+    res.redirect('/books');
+  } catch (err) {
+    console.error('Error updating book:', err);
+    if (err.code === 'ER_DUP_ENTRY') {
+      req.flash('error', 'ISBN already exists.');
+    } else {
+      req.flash('error', 'Failed to update book.');
+    }
+    res.redirect(`/books/${req.params.id}/edit`);
+  }
+});
+
+// ==============================
+// Books: DELETE (admin only)
+// ==============================
+app.post('/books/:id/delete', checkAuthenticated, checkAdmin, async (req, res) => {
+  const id = req.params.id;
+  try {
+    // Remove dependents first due to FKs
+    await db.query('DELETE FROM Stocks WHERE book_id = ?', [id]);
+    await db.query('DELETE FROM Cart WHERE book_id = ?', [id]);
+    await db.query('DELETE FROM Books WHERE book_id = ?', [id]);
+
+    req.flash('success', 'Book deleted.');
+    res.redirect('/books');
+  } catch (err) {
+    console.error('Error deleting book:', err);
+    req.flash('error', 'Failed to delete book.');
+    res.redirect('/books');
+  }
+});
+
+// ==============================
+// Books: SHOW (individual book)
+// Public: viewable by all
+// ==============================
+app.get('/books/:id', async (req, res) => {
+  try {
+    const id = req.params.id;
+    const [rows] = await db.query(
+      `SELECT book_id, title, author, isbn, genre, price, published_year, published_date, image_url, description
+       FROM Books WHERE book_id = ? LIMIT 1`, [id]
+    );
+    if (!rows.length) {
+      req.flash('error', 'Book not found.');
+      return res.redirect('/books');
+    }
+    const book = rows[0];
+
+    // Related books: same genre, not the same book
+    const [related] = await db.query(
+      `SELECT book_id, title, author, price, image_url
+       FROM Books WHERE genre <=> ? AND book_id <> ? ORDER BY title ASC LIMIT 6`,
+      [book.genre, id]
+    );
+
+    res.render('books/show', {
+      user: req.session.user,
+      book,
+      related
+    });
+  } catch (err) {
+    console.error('Error showing book:', err);
+    req.flash('error', 'Could not load book.');
+    res.redirect('/books');
   }
 });
 

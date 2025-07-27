@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Books</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <%- include('partials/_navbar') %>
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="mb-0">Books</h1>
+    <% if (user && user.role === 'admin') { %>
+      <a href="/books/new" class="btn btn-primary">+ New Book</a>
+    <% } %>
+  </div>
+
+  <% if (errors && errors.length) { %>
+    <div class="alert alert-danger"><%= errors.join('<br>') %></div>
+  <% } %>
+  <% if (messages && messages.length) { %>
+    <div class="alert alert-success"><%= messages.join('<br>') %></div>
+  <% } %>
+
+  <form class="row g-2 mb-3" method="GET" action="/books">
+    <div class="col-md-4">
+      <input type="text" name="search" class="form-control" placeholder="Search title/author/ISBN" value="<%= q.search || '' %>">
+    </div>
+    <div class="col-md-3">
+      <select name="genre" class="form-select">
+        <% genres.forEach(g => { %>
+          <option value="<%= g %>" <%= (q.genre === g) ? 'selected' : '' %>><%= g %></option>
+        <% }); %>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <select name="sort" class="form-select">
+        <option value="title_asc"  <%= q.sort==='title_asc'?'selected':'' %>>Title ↑</option>
+        <option value="title_desc" <%= q.sort==='title_desc'?'selected':'' %>>Title ↓</option>
+        <option value="author_asc" <%= q.sort==='author_asc'?'selected':'' %>>Author ↑</option>
+        <option value="author_desc"<%= q.sort==='author_desc'?'selected':'' %>>Author ↓</option>
+        <option value="year_desc"  <%= q.sort==='year_desc'?'selected':'' %>>Year ↓</option>
+        <option value="year_asc"   <%= q.sort==='year_asc'?'selected':'' %>>Year ↑</option>
+        <option value="price_asc"  <%= q.sort==='price_asc'?'selected':'' %>>Price ↑</option>
+        <option value="price_desc" <%= q.sort==='price_desc'?'selected':'' %>>Price ↓</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <button class="btn btn-outline-secondary w-100">Apply</button>
+    </div>
+  </form>
+
+  <div class="table-responsive">
+    <table class="table table-striped align-middle">
+      <thead>
+        <tr>
+          <th>Cover</th><th>Title</th><th>Author</th><th>Genre</th><th>Year</th><th>Price</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+      <% books.forEach(b => { %>
+        <tr>
+          <td style="width:70px">
+            <% if (b.image_url) { %>
+              <img src="<%= b.image_url %>" class="img-fluid" alt="cover">
+            <% } %>
+          </td>
+          <td><a href="/books/<%= b.book_id %>"><%= b.title %></a></td>
+          <td><%= b.author || '-' %></td>
+          <td><%= b.genre || '-' %></td>
+          <td><%= b.published_year || '-' %></td>
+          <td>$<%= Number(b.price).toFixed(2) %></td>
+          <td class="text-end">
+            <% if (user) { %>
+              <form method="POST" action="/cart" class="d-inline">
+                <input type="hidden" name="book_id" value="<%= b.book_id %>">
+                <input type="hidden" name="quantity" value="1">
+                <button class="btn btn-sm btn-outline-success" title="Add to cart">🛒</button>
+              </form>
+            <% } %>
+            <% if (user && user.role === 'admin') { %>
+              <a href="/books/<%= b.book_id %>/edit" class="btn btn-sm btn-outline-primary">Edit</a>
+              <form method="POST" action="/books/<%= b.book_id %>/delete" class="d-inline" onsubmit="return confirm('Delete this book?')">
+                <button class="btn btn-sm btn-outline-danger">Delete</button>
+              </form>
+            <% } %>
+          </td>
+        </tr>
+      <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+</body>
+</html>

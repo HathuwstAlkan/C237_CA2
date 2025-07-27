@@ -5,6 +5,7 @@
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
+    <%- include('partials/_navbar') %>
     <div class="container">
         <h1 class="mt-5">Dashboard</h1>
         <p>Welcome, <%= user.username %> (<%= user.role %>)</p>
@@ -13,5 +14,10 @@
         <% } %>
         <a href="/logout" class="btn btn-primary">Logout</a>
     </div>
+    <div class="container py-4">
+        <h1 class="mb-3">Dashboard</h1>
+        <a href="/books" class="btn btn-primary">Browse Books</a>
+    </div>
+
 </body>
 </html>
