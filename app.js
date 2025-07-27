@@ -32,8 +32,7 @@ app.use(session({
     secret: 'super_secret_session_key',
     resave: false,
     saveUninitialized: true,
-    // Session expires after 1 week (in milliseconds)
-    cookie: { maxAge: 1000 * 60 * 60 * 24 * 7 }
+    cookie: { maxAge: 1000 * 60 * 60 * 24 * 7 } // Session expires after 1 week (in milliseconds)
 }));
 
 app.use(flash());

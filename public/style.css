@@ -318,6 +318,27 @@ html, body {
     margin-left: 5px;
 }
 
+/* Profile Icon Styling */
+.profile-image-link { /* Changed from .profile-icon-link */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.25rem 0.5rem; /* Adjust padding for image */
+}
+
+.profile-img { /* New class for the img tag */
+    width: 32px; /* Adjust size as needed */
+    height: 32px;
+    border-radius: 50%; /* Make it circular */
+    object-fit: cover; /* Ensure image covers the area */
+    border: 2px solid rgba(255, 255, 255, 0.7); /* Subtle white border */
+    transition: border-color 0.3s ease;
+}
+
+.profile-image-link:hover .profile-img {
+    border-color: var(--navbar-active-link-color); /* Highlight border on hover */
+}
+
 
 /* Desktop Overrides (min-width: 768px) */
 @media (min-width: 768px) {

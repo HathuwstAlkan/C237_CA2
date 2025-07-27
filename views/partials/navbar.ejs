@@ -1,8 +1,10 @@
-<!-- views/partials/_navbar.ejs -->
+<!-- views/partials/navbar.ejs -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container-fluid">
-        <!-- Brand Link: Always redirects to the registration/home page -->
-        <a class="navbar-brand" href="/">RP Bookstore</a>
+        <!-- Brand Link: Dynamic based on user login/role -->
+        <a class="navbar-brand" href="<%= user ? '/dashboard' : '/' %>">
+            RP Bookstore<%= user && user.role === 'admin' ? ' Admin' : '' %>
+        </a>
 
         <!-- Toggler for mobile navigation -->
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
@@ -14,13 +16,6 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 <% if (user) { %>
-                    <!-- Dashboard Tab (Dynamic based on role) -->
-                    <li class="nav-item">
-                        <a class="nav-link <%= typeof activePage !== 'undefined' && activePage === 'dashboard' ? 'active' : '' %>"
-                           href="<%= user.role === 'admin' ? '/admin' : '/dashboard' %>">
-                            Dashboard
-                        </a>
-                    </li>
                     <!-- Discover Tab (Books) -->
                     <li class="nav-item">
                         <a class="nav-link <%= typeof activePage !== 'undefined' && activePage === 'books' ? 'active' : '' %>" href="/books">
@@ -55,22 +50,33 @@
                             </a>
                         </li>
                     <% } %>
-                    <!-- "View Site" link for Admins -->
+                    <!-- "View Site" dropdown for Admins -->
                     <% if (user.role === 'admin') { %>
-                        <li class="nav-item me-3">
-                            <a class="nav-link" href="/books" title="View Public Site">View Site</a>
+                        <li class="nav-item dropdown me-3">
+                            <a class="nav-link dropdown-toggle" href="#" id="viewDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                View
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="viewDropdown">
+                                <li><h6 class="dropdown-header">Switch View</h6></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="/books">Customer View</a></li>
+                                <li><a class="dropdown-item" href="/admin">Admin View</a></li>
+                            </ul>
                         </li>
                     <% } %>
 
-                    <!-- Profile Dropdown -->
+                    <!-- Profile Dropdown (now with image) -->
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            Profile
+                        <a class="nav-link dropdown-toggle profile-image-link" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <!-- Placeholder for profile image. User will upload 'profile_headshot.png' to public/assets -->
+                            <img src="/assets/profile_headshot.png" onerror="this.onerror=null;this.src='https://placehold.co/50x50/E0E0E0/333333?text=Profile';" alt="Profile" class="profile-img">
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
                             <li><h6 class="dropdown-header">Logged in as: <%= user.username %></h6></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="/profile">View Profile</a></li>
+                            <li><a class="dropdown-item" href="/partials/login">Quick Login</a></li>
+                            <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="/logout">Logout</a></li>
                         </ul>
                     </li>

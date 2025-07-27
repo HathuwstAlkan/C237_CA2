@@ -1,76 +1,79 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Customers</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Customer Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <!-- Root-level view => include from 'partials/...' -->
-  <%- include('../partials/_navbar') %>
+    <!-- Root-level view ⇒ include from 'partials/...' -->
+    <%- include('../partials/navbar', { user: user, activePage: 'customers' }) %>
 
-  <div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h1 class="mb-0">Customers</h1>
+    <div class="container py-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h1 class="mb-0">Customers</h1>
+            <!-- Add New Customer button (optional, if you implement this) -->
+            <!-- <a href="/admin/customers/new" class="btn btn-success">Add New Customer</a> -->
+        </div>
+
+        <% if (messages && messages.length > 0) { %>
+            <div class="alert alert-success mt-3" role="alert">
+                <% messages.forEach(function(message) { %>
+                    <p class="mb-0"><%= message %></p>
+                <% }); %>
+            </div>
+        <% } %>
+        <% if (errors && errors.length > 0) { %>
+            <div class="alert alert-danger mt-3" role="alert">
+                <% errors.forEach(function(error) { %>
+                    <p class="mb-0"><%= error %></p>
+                <% }); %>
+            </div>
+        <% } %>
+
+        <% if (users && users.length > 0) { %>
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>First Name</th>
+                            <th>Last Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Role</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% users.forEach(u => { %>
+                            <tr>
+                                <td><%= u.customer_id %></td>
+                                <td><%= u.username %></td>
+                                <td><%= u.first_name %></td>
+                                <td><%= u.last_name %></td>
+                                <td><%= u.email %></td>
+                                <td><%= u.phone_number || 'N/A' %></td>
+                                <td><%= u.role %></td>
+                                <td>
+                                    <!-- Edit Role button (if implemented) -->
+                                    <!-- <a href="/customers/edit-role/<%= u.customer_id %>" class="btn btn-sm btn-info me-2">Edit Role</a> -->
+                                    <form action="/customers/delete/<%= u.customer_id %>" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this user?');">
+                                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+        <% } else { %>
+            <p class="text-center">No customers found.</p>
+        <% } %>
     </div>
 
-    <% if (typeof errors !== 'undefined' && errors && errors.length) { %>
-      <div class="alert alert-danger"><%= errors.join('<br>') %></div>
-    <% } %>
-    <% if (typeof messages !== 'undefined' && messages && messages.length) { %>
-      <div class="alert alert-success"><%= messages.join('<br>') %></div>
-    <% } %>
-
-    <div class="table-responsive">
-      <table class="table table-striped align-middle">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Username</th>
-            <th>First</th>
-            <th>Last</th>
-            <th>Email</th>
-            <th>Phone</th>
-            <th>Role</th>
-            <th class="text-end">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% (users || []).forEach(u => { %>
-            <tr>
-              <td><%= u.customer_id %></td>
-              <td><%= u.username %></td>
-              <td><%= u.first_name || '' %></td>
-              <td><%= u.last_name || '' %></td>
-              <td><%= u.email %></td>
-              <td><%= u.phone_number || '-' %></td>
-              <td>
-                <span class="badge <%= u.role === 'admin' ? 'bg-primary' : 'bg-secondary' %>">
-                  <%= u.role %>
-                </span>
-              </td>
-              <td class="text-end">
-                <!-- Change role -->
-                <form class="d-inline" method="POST" action="/customers/edit-role/<%= u.customer_id %>">
-                  <select name="role" class="form-select form-select-sm d-inline-block w-auto me-2">
-                    <option value="regular" <%= u.role==='regular'?'selected':'' %>>regular</option>
-                    <option value="admin"   <%= u.role==='admin'  ?'selected':'' %>>admin</option>
-                  </select>
-                  <button class="btn btn-sm btn-outline-primary">Update</button>
-                </form>
-
-                <!-- Delete -->
-                <form class="d-inline ms-2" method="POST" action="/customers/delete/<%= u.customer_id %>"
-                      onsubmit="return confirm('Delete this customer? This cannot be undone.')">
-                  <button class="btn btn-sm btn-outline-danger">Delete</button>
-                </form>
-              </td>
-            </tr>
-          <% }) %>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
