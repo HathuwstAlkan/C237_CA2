@@ -26,7 +26,6 @@ html, body {
     left: 0;
     width: 100%;
     height: 100%;
-    /* IMPORTANT: Ensure this path is correct and the image is pre-blurred */
     background-image: url('/assets/regisBG.png');
     background-size: cover;
     background-position: center;
