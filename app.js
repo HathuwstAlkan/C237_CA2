@@ -1321,7 +1321,7 @@ app.post('/admin/stocks', checkAuthenticated, checkAdmin, async (req, res) => {
         }
 
         await db.query(
-            'INSERT INTO stocks (book_id, publisher_id, quantity) VALUES (?, ?, ?)',
+            'INSERT INTO stocks (book_id, publisher_id, quantity) VALUES (?, ?, ?)' ,
             [parseInt(book_id), parseInt(publisher_id), parseInt(quantity)]
         );
 
