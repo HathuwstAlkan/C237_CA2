@@ -541,12 +541,7 @@ app.post('/customers/delete/:id', checkAuthenticated, checkAdmin, async (req, re
     }
 });
 
-<<<<<<< HEAD
-// Admin: individual book page (details + admin actions) - This is for viewing a single book as admin
-=======
-
 // Admin: individual book page (details + admin actions)
->>>>>>> adb75314aa824b28fdc621103d4d8508665240f7
 app.get('/admin/books/:id', checkAuthenticated, checkAdmin, async (req, res) => {
     try {
         const id = req.params.id;
@@ -957,27 +952,6 @@ app.post('/cart', checkAuthenticated, async (req, res) => {
   }
 });
 
-<<<<<<< HEAD
-app.post('/cart/delete/:id', checkAuthenticated, async (req, res) => {
-    const cartItemId = req.params.id;
-    const customerId = req.session.user.customer_id;
-    try {
-        const [result] = await db.query(
-            'DELETE FROM cart WHERE cart_item_id = ? AND customer_id = ?',
-            [cartItemId, customerId]
-        );
-        if (result.affectedRows === 0) {
-            req.flash('error', 'Cart item not found or you do not have permission to delete it.');
-            return res.status(404).redirect('/dashboard');
-        }
-        req.flash('success', 'Cart item deleted successfully!');
-        res.redirect('/dashboard');
-    } catch (err) {
-        console.error('Error deleting cart item:', err);
-        req.flash('error', 'Error deleting cart item.');
-        res.status(500).redirect('/dashboard');
-    }
-=======
 // Read: list cart items + total
 app.get('/cart', checkAuthenticated, async (req, res) => {
   const customer_id = req.session.user.customer_id;
@@ -1039,7 +1013,6 @@ app.post('/cart/:id/delete', checkAuthenticated, async (req, res) => {
     req.flash('error', 'Could not remove item.');
   }
   res.redirect('/cart');
->>>>>>> adb75314aa824b28fdc621103d4d8508665240f7
 });
 
 // ==============================
