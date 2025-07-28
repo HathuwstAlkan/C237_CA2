@@ -147,7 +147,6 @@ app.get('/partials/login', (req, res) => {
         errors: req.flash('error')
     });
 });
-
 // Explicit Register Page
 app.get('/partials/register', (req, res) => {
     const formData = req.flash('formData')[0] || {};
@@ -583,7 +582,7 @@ app.get('/admin/books/:id', checkAuthenticated, checkAdmin, async (req, res) => 
         const id = req.params.id;
 
         const [rows] = await db.query(
-            `SELECT book_id, title, author, isbn, genre, price, published_year, published_date, image_url, description
+            `SELECT book_id, title, author, isbn, genre, price, published_year, image_url, description
              FROM books WHERE book_id = ? LIMIT 1`,
             [id]
         );
@@ -617,7 +616,7 @@ app.get('/books', async (req, res) => {
     try {
         const { search = '', genre = '', sort = 'title_asc' } = req.query;
 
-        let sql = `SELECT book_id, title, author, isbn, genre, price, published_year, published_date, image_url
+        let sql = `SELECT book_id, title, author, isbn, genre, price, published_year, image_url
                    FROM books WHERE 1=1`;
         const params = [];
 
@@ -666,7 +665,7 @@ app.get('/admin/books', checkAuthenticated, checkAdmin, async (req, res) => {
     try {
         const { search = '', genre = '', sort = 'title_asc' } = req.query;
 
-        let sql = `SELECT book_id, title, author, isbn, genre, price, published_year, published_date, image_url
+        let sql = `SELECT book_id, title, author, isbn, genre, price, published_year, image_url
                    FROM books WHERE 1=1`;
         const params = [];
 
@@ -697,7 +696,7 @@ app.get('/admin/books', checkAuthenticated, checkAdmin, async (req, res) => {
         const [genresRows] = await db.query(`SELECT DISTINCT genre FROM books WHERE genre IS NOT NULL AND genre <> '' ORDER BY genre ASC`);
         const genres = ['All', ...genresRows.map(r => r.genre)];
 
-        res.render('admin/books/index', { // Render admin-specific books index
+        res.render('books/edit', { // Render admin-specific books index
             user: req.session.user,
             books,
             genres,
@@ -740,7 +739,7 @@ app.get('/books/new', checkAuthenticated, checkAdmin, async (req, res) => {
 // ==============================
 app.post('/books', checkAuthenticated, checkAdmin, upload.single('image_file'), async (req, res) => {
     try {
-        const { title, author, isbn, genre, price, published_year, published_date, image_url, description, publisher_id, stock_quantity } = req.body;
+        const { title, author, isbn, genre, price, published_year, image_url, description, publisher_id, stock_quantity } = req.body;
         const errors = [];
 
         if (!title || !author || !isbn || !price) errors.push('Title, author, ISBN, and price are required.');
@@ -767,13 +766,12 @@ app.post('/books', checkAuthenticated, checkAdmin, upload.single('image_file'), 
         }
 
         await db.query(
-            `INSERT INTO books (title, author, isbn, genre, price, published_year, published_date, image_url, description)
+            `INSERT INTO books (title, author, isbn, genre, price, published_year, image_url, description)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 title, author, isbn || null, genre || null,
                 parseFloat(price),
                 published_year ? parseInt(published_year) : null,
-                published_date || null,
                 finalImageUrl, // Use the determined image URL
                 description || null
             ]
@@ -802,109 +800,102 @@ app.post('/books', checkAuthenticated, checkAdmin, upload.single('image_file'), 
 // ==============================
 // books: EDIT form (admin only)
 // ==============================
-app.get('/books/:id/edit', checkAuthenticated, checkAdmin, async (req, res) => {
-    try {
-        const id = req.params.id;
-        const [rows] = await db.query(
-            `SELECT book_id, title, author, isbn, genre, price, published_year, published_date, image_url, description
-             FROM books WHERE book_id = ? LIMIT 1`, [id]
-        );
-        if (!rows.length) {
-            req.flash('error', 'Book not found.');
-            return res.redirect('/admin/books'); // Redirect to admin books list
-        }
-        res.render('books/edit', {
-            user: req.session.user,
-            book: rows[0],
-            errors: req.flash('error'),
-            messages: req.flash('success')
-        });
-    } catch (err) {
-        console.error('Error loading edit form:', err);
-        req.flash('error', 'Could not load edit form.');
-        res.redirect('/admin/books'); // Redirect to admin books list
+// Edit Book (form)
+// Edit Book form (works for /books/:id/edit and /admin/books/:id/edit)
+app.get(['/books/:id/edit', '/admin/books/:id/edit'], checkAuthenticated, checkAdmin, async (req, res) => {
+  try {
+    const id = req.params.id;
+
+    const [rows] = await db.query(
+      'SELECT * FROM Books WHERE book_id = ? LIMIT 1',
+      [id]
+    );
+
+    if (!rows || rows.length === 0) {
+      req.flash('error', 'Book not found.');
+      return res.redirect('/books');
     }
+
+    res.render('books/edit', {
+      user: req.session.user,
+      book: rows[0],              // <-- THIS is what edit.ejs needs
+      errors: req.flash('error'),
+      messages: req.flash('success')
+    });
+  } catch (err) {
+    console.error('Error loading edit page:', err);
+    req.flash('error', 'Could not load edit page.');
+    res.redirect('/books');
+  }
 });
+
+
 
 // ==============================
 // books: UPDATE (admin only)
 // ==============================
-app.post('/books/:id/edit', checkAuthenticated, checkAdmin, upload.single('image_file'), async (req, res) => {
-    try {
-        const id = req.params.id;
-        const { title, author, isbn, genre, price, published_year, published_date, image_url, description } = req.body;
-        const errors = [];
+// Update Book (submit)
+app.post('/books/:id/edit', checkAuthenticated, checkAdmin, async (req, res) => {
+  try {
+    const id = req.params.id;
+    let {
+      title,
+      author,
+      isbn,
+      genre,
+      price,
+      published_year,
+      description,
+      image_url
+    } = req.body;
 
-        if (!title || !author || !isbn || !price) errors.push('Title, author, ISBN, and price are required.');
-        if (price && isNaN(price)) errors.push('Price must be a number.');
-        if (published_year && (isNaN(published_year) || published_year < 1500 || published_year > (new Date().getFullYear()+1))) {
-            errors.push('Published year is invalid.');
-        }
-
-        if (errors.length) {
-            req.flash('error', errors);
-            return res.redirect(`/books/${id}/edit`);
-        }
-
-        let finalImageUrl = image_url || null; // Prefer URL if provided
-
-        // Fetch current image URL to handle deletion if needed
-        const [currentBookRows] = await db.query('SELECT image_url FROM books WHERE book_id = ?', [id]);
-        const currentImageUrl = currentBookRows[0]?.image_url;
-
-        // If a new file was uploaded
-        if (req.file) {
-            finalImageUrl = `/uploads/${req.file.filename}`;
-            // Delete old uploaded image file if it exists
-            if (currentImageUrl && currentImageUrl.startsWith('/uploads/')) {
-                const oldImagePath = path.join(__dirname, 'public', currentImageUrl);
-                if (fs.existsSync(oldImagePath)) {
-                    fs.unlink(oldImagePath, (err) => {
-                        if (err) console.error('Error deleting old book image file:', oldImagePath, err);
-                    });
-                }
-            }
-        } else if (image_url === '') { // If URL field was explicitly cleared by user
-            finalImageUrl = null;
-            // Delete old uploaded image file if it exists
-            if (currentImageUrl && currentImageUrl.startsWith('/uploads/')) {
-                const oldImagePath = path.join(__dirname, 'public', currentImageUrl);
-                if (fs.existsSync(oldImagePath)) {
-                    fs.unlink(oldImagePath, (err) => {
-                        if (err) console.error('Error deleting old book image file:', oldImagePath, err);
-                    });
-                }
-            }
-        }
-
-
-        await db.query(
-            `UPDATE books
-             SET title = ?, author = ?, isbn = ?, genre = ?, price = ?, published_year = ?, published_date = ?, image_url = ?, description = ?
-             WHERE book_id = ?`,
-            [
-                title, author, isbn || null, genre || null,
-                parseFloat(price),
-                published_year ? parseInt(published_year) : null,
-                published_date || null,
-                finalImageUrl, // Use the determined image URL
-                description || null,
-                id
-            ]
-        );
-
-        req.flash('success', 'Book updated.');
-        res.redirect('/admin/books'); // Redirect to admin books list
-    } catch (err) {
-        console.error('Error updating book:', err);
-        if (err.code === 'ER_DUP_ENTRY') {
-            req.flash('error', 'ISBN already exists.');
-        } else {
-            req.flash('error', 'Failed to update book.');
-        }
-        res.redirect(`/books/${req.params.id}/edit`);
+    // Basic validation
+    const errors = [];
+    if (!title || !author || !isbn || !genre || !price) {
+      errors.push('Title, author, ISBN, genre, and price are required.');
     }
+    if (price && (isNaN(price) || Number(price) <= 0)) {
+      errors.push('Price must be a positive number.');
+    }
+    if (published_year && isNaN(published_year)) {
+      errors.push('Published year must be a number.');
+    }
+    if (errors.length) {
+      req.flash('error', errors);
+      return res.redirect(`/books/${id}/edit`);
+    }
+
+    // If you use multer and allow file uploads on edit:
+    // const coverPath = (req.file && `/uploads/${req.file.filename}`) || image_url || null;
+    // and then use coverPath instead of image_url below.
+
+    await db.query(
+      `UPDATE Books
+       SET title = ?, author = ?, isbn = ?, genre = ?, price = ?, published_year = ?, description = ?, image_url = ?
+       WHERE book_id = ?`,
+      [
+        title.trim(),
+        author.trim(),
+        isbn.trim(),
+        genre.trim(),
+        Number(price),
+        published_year ? parseInt(published_year, 10) : null,
+        description || null,
+        image_url || null, // or coverPath if using multer
+        id
+      ]
+    );
+
+    req.flash('success', 'Book updated.');
+    // Go back to list (or use `/books/${id}` if you have a show page)
+    res.redirect('/books');
+  } catch (err) {
+    console.error('Error updating book:', err);
+    req.flash('error', 'Failed to update book.');
+    res.redirect(`/books/${req.params.id}/edit`);
+  }
 });
+
 
 // ==============================
 // books: DELETE (admin only)
@@ -948,7 +939,7 @@ app.get('/books/:id', async (req, res) => {
     try {
         const id = req.params.id;
         const [rows] = await db.query(
-            `SELECT book_id, title, author, isbn, genre, price, published_year, published_date, image_url, description
+            `SELECT book_id, title, author, isbn, genre, price, published_year, image_url, description
              FROM books WHERE book_id = ? LIMIT 1`, [id]
         );
         if (!rows.length) {
