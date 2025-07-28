@@ -738,64 +738,74 @@ app.get('/books/new', checkAuthenticated, checkAdmin, async (req, res) => {
 // books: CREATE (admin only)
 // ==============================
 app.post('/books', checkAuthenticated, checkAdmin, upload.single('image_file'), async (req, res) => {
-    try {
-        const { title, author, isbn, genre, price, published_year, image_url, description, publisher_id, stock_quantity } = req.body;
-        const errors = [];
+  try {
+    const {
+      title, author, isbn, genre, price,
+      published_year, image_url, description,
+      publisher_id, stock_quantity
+    } = req.body;
 
-        if (!title || !author || !isbn || !price) errors.push('Title, author, ISBN, and price are required.');
-        if (price && isNaN(price)) errors.push('Price must be a number.');
-        if (published_year && (isNaN(published_year) || published_year < 1500 || published_year > (new Date().getFullYear()+1))) {
-            errors.push('Published year is invalid.');
-        }
-        if (!publisher_id) errors.push('Publisher is required.');
-        const qty = (stock_quantity === '' || stock_quantity == null)
-            ? 0
-            : parseInt(stock_quantity, 10);
-        if (isNaN(qty) || qty < 0) errors.push('Initial stock must be a non-negative integer.');
-
-        if (errors.length) {
-            req.flash('error', errors);
-            return res.redirect('/books/new');
-        }
-
-        let finalImageUrl = image_url || null; // Prefer URL if provided
-
-        // If a file was uploaded and no URL was provided, use the file path
-        if (req.file && !image_url) {
-            finalImageUrl = `/uploads/${req.file.filename}`;
-        }
-
-        await db.query(
-            `INSERT INTO books (title, author, isbn, genre, price, published_year, image_url, description)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-                title, author, isbn || null, genre || null,
-                parseFloat(price),
-                published_year ? parseInt(published_year) : null,
-                finalImageUrl, // Use the determined image URL
-                description || null
-            ]
-        );
-
-        await db.query(
-            `INSERT INTO Stocks (book_id, publisher_id, quantity)
-            VALUES (?, ?, ?)
-            ON DUPLICATE KEY UPDATE quantity = VALUES(quantity)`,
-            [newBookId, parseInt(publisher_id, 10), qty]
-        );
-
-        req.flash('success', 'Book created.');
-        res.redirect('/admin/books'); // Redirect to admin books list
-    } catch (err) {
-        console.error('Error creating book:', err);
-        if (err.code === 'ER_DUP_ENTRY') {
-            req.flash('error', 'ISBN already exists.');
-        } else {
-            req.flash('error', 'Failed to create book.');
-        }
-        res.redirect('/books/new');
+    const errors = [];
+    if (!title || !author || !isbn || !price) errors.push('Title, author, ISBN, and price are required.');
+    if (price && isNaN(price)) errors.push('Price must be a number.');
+    if (published_year && (isNaN(published_year) || published_year < 1500 || published_year > (new Date().getFullYear() + 1))) {
+      errors.push('Published year is invalid.');
     }
+    if (!publisher_id) errors.push('Publisher is required.');
+    const qty = (stock_quantity === '' || stock_quantity == null) ? 0 : parseInt(stock_quantity, 10);
+    if (isNaN(qty) || qty < 0) errors.push('Initial stock must be a non-negative integer.');
+
+    if (errors.length) {
+      req.flash('error', errors);
+      return res.redirect('/books/new');
+    }
+
+    // pick image URL (prefer URL; if none and file uploaded, use uploaded file path)
+    let finalImageUrl = image_url || null;
+    if (req.file && !image_url) {
+      finalImageUrl = `/uploads/${req.file.filename}`;
+    }
+
+    // INSERT book (8 columns => 8 placeholders) ✔
+    const [bookResult] = await db.query(
+      `INSERT INTO books (title, author, isbn, genre, price, published_year, image_url, description)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        title,
+        author,
+        isbn || null,
+        genre || null,
+        parseFloat(price),
+        published_year ? parseInt(published_year, 10) : null,
+        finalImageUrl,
+        description || null
+      ]
+    );
+
+    // capture the new PK ✔
+    const newBookId = bookResult.insertId;
+
+    // INSERT/UPSERT initial stock ✔
+    await db.query(
+      `INSERT INTO Stocks (book_id, publisher_id, quantity)
+       VALUES (?, ?, ?)
+       ON DUPLICATE KEY UPDATE quantity = VALUES(quantity)`,
+      [newBookId, parseInt(publisher_id, 10), qty]
+    );
+
+    req.flash('success', 'Book created.');
+    return res.redirect('/books');   // go to the unified books list
+  } catch (err) {
+    console.error('Error creating book:', err);
+    if (err.code === 'ER_DUP_ENTRY') {
+      req.flash('error', 'ISBN already exists.');
+    } else {
+      req.flash('error', 'Failed to create book.');
+    }
+    return res.redirect('/books/new');
+  }
 });
+
 
 // ==============================
 // books: EDIT form (admin only)
