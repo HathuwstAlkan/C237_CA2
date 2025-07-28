@@ -989,14 +989,19 @@ app.post('/cart', checkAuthenticated, async (req, res) => {
 });
 
 // Read: list cart items + total
-app.get('/cart', checkAuthenticated, async (req, res) => {
+app.get('/cart', checkAuthenticated, async (req, res, next) => {
   const customer_id = req.session.user.customer_id;
   try {
     const [items] = await db.query(`
-      SELECT c.cart_item_id, b.title, b.price, c.quantity
-        FROM cart c
-        JOIN books b ON c.book_id = b.book_id
-       WHERE c.customer_id = ?`, [customer_id]);
+      SELECT
+        c.cart_id      AS cart_item_id,
+        b.title,
+        b.price,
+        c.quantity
+      FROM cart c
+      JOIN books b ON c.book_id = b.book_id
+      WHERE c.customer_id = ?`, [customer_id]
+    );
     const total = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
     res.render('cart/cart_list', {
       user:     req.session.user,
@@ -1006,9 +1011,7 @@ app.get('/cart', checkAuthenticated, async (req, res) => {
       errors:   req.flash('error')
     });
   } catch (err) {
-    console.error('Error fetching cart items:', err);
-    req.flash('error', 'Could not load cart.');
-    res.redirect('/dashboard');
+    next(err);
   }
 });
 
@@ -1023,7 +1026,7 @@ app.post('/cart/:id/update', checkAuthenticated, async (req, res) => {
   }
   try {
     await db.query(
-      'UPDATE cart SET quantity = ? WHERE cart_item_id = ? AND customer_id = ?',
+      'UPDATE cart SET quantity = ? WHERE cart_id = ? AND customer_id = ?',
       [qty, cartItemId, customer_id]
     );
     req.flash('success', 'Cart updated.');
@@ -1040,7 +1043,7 @@ app.post('/cart/:id/delete', checkAuthenticated, async (req, res) => {
   const customer_id = req.session.user.customer_id;
   try {
     await db.query(
-      'DELETE FROM cart WHERE cart_item_id = ? AND customer_id = ?',
+      'DELETE FROM cart WHERE cart_id = ? AND customer_id = ?',
       [cartItemId, customer_id]
     );
     req.flash('success', 'Item removed.');
@@ -1050,7 +1053,6 @@ app.post('/cart/:id/delete', checkAuthenticated, async (req, res) => {
   }
   res.redirect('/cart');
 });
-
 
 // ==============================
 // Admin: Stocks - LIST (with search)
