@@ -35,7 +35,7 @@
                     <!-- Cart Icon for Regular Users (Admins do not see this) -->
                     <% if (user.role === 'regular') { %>
                         <li class="nav-item me-2">
-                            <a class="nav-link" href="#" title="Cart">🛒
+                            <a class="nav-link" href="/cart" title="Cart">🛒
                                 <% if (typeof cartCount !== 'undefined' && cartCount > 0) { %>
                                     <span class="badge rounded-pill bg-success align-text-top"><%= cartCount %></span>
                                 <% } %>
