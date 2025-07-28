@@ -959,9 +959,10 @@ app.get('/cart/new', checkAuthenticated, async (req, res) => {
   try {
     const [books] = await db.query('SELECT book_id, title FROM books');
     res.render('cart/create_cart_item', {
-      user:   req.session.user,
+      user:     req.session.user,
       books,
-      errors: req.flash('error')
+      errors:   req.flash('error'),
+      messages: req.flash('success')
     });
   } catch (err) {
     console.error('Error loading create cart item form:', err);
@@ -980,11 +981,11 @@ app.post('/cart', checkAuthenticated, async (req, res) => {
       [customer_id, book_id, quantity]
     );
     req.flash('success', 'Book added to cart successfully!');
-    res.redirect('/cart');
+    return res.redirect('/cart');
   } catch (err) {
     console.error('Error adding to cart:', err);
     req.flash('error', 'Could not add to cart. Please try again.');
-    res.redirect('/cart/new');
+    return res.redirect('/cart/new');
   }
 });
 
@@ -992,7 +993,7 @@ app.post('/cart', checkAuthenticated, async (req, res) => {
 app.get('/cart', checkAuthenticated, async (req, res, next) => {
   const customer_id = req.session.user.customer_id;
   try {
-    const [items] = await db.query(`
+    let [items] = await db.query(`
       SELECT
         c.cart_id      AS cart_item_id,
         b.title,
@@ -1002,8 +1003,13 @@ app.get('/cart', checkAuthenticated, async (req, res, next) => {
       JOIN books b ON c.book_id = b.book_id
       WHERE c.customer_id = ?`, [customer_id]
     );
+
+    // Convert price (DECIMAL string) to Number
+    items = items.map(i => ({ ...i, price: parseFloat(i.price) }));
+
     const total = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
-    res.render('cart/cart_list', {
+
+    return res.render('cart/cart_list', {
       user:     req.session.user,
       items,
       total,
@@ -1011,7 +1017,7 @@ app.get('/cart', checkAuthenticated, async (req, res, next) => {
       errors:   req.flash('error')
     });
   } catch (err) {
-    next(err);
+    return next(err);
   }
 });
 
@@ -1020,10 +1026,12 @@ app.post('/cart/:id/update', checkAuthenticated, async (req, res) => {
   const cartItemId  = req.params.id;
   const qty         = parseInt(req.body.quantity, 10);
   const customer_id = req.session.user.customer_id;
+
   if (isNaN(qty) || qty < 1) {
     req.flash('error', 'Quantity must be at least 1.');
     return res.redirect('/cart');
   }
+
   try {
     await db.query(
       'UPDATE cart SET quantity = ? WHERE cart_id = ? AND customer_id = ?',
