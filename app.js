@@ -996,15 +996,32 @@ app.get('/cart/new', checkAuthenticated, async (req, res) => {
   }
 });
 
-// Create: handle form POST
+// Create / Upsert: handle form POST
 app.post('/cart', checkAuthenticated, async (req, res) => {
   const { book_id, quantity } = req.body;
   const customer_id = req.session.user.customer_id;
+
   try {
-    await db.query(
-      'INSERT INTO cart (customer_id, book_id, quantity) VALUES (?, ?, ?)',
-      [customer_id, book_id, quantity]
+    // 1) see if this book is already in their cart
+    const [[existing]] = await db.query(
+      'SELECT cart_id, quantity FROM cart WHERE customer_id = ? AND book_id = ?',
+      [customer_id, book_id]
     );
+
+    if (existing) {
+      // 2a) if yes, update its quantity
+      await db.query(
+        'UPDATE cart SET quantity = quantity + ? WHERE cart_id = ?',
+        [parseInt(quantity,10), existing.cart_id]
+      );
+    } else {
+      // 2b) otherwise insert a new row
+      await db.query(
+        'INSERT INTO cart (customer_id, book_id, quantity) VALUES (?, ?, ?)',
+        [customer_id, book_id, quantity]
+      );
+    }
+
     req.flash('success', 'Book added to cart successfully!');
     return res.redirect('/cart');
   } catch (err) {
@@ -1014,7 +1031,7 @@ app.post('/cart', checkAuthenticated, async (req, res) => {
   }
 });
 
-// Read: list cart items + total (with debug)
+// Read: list cart items + total
 app.get('/cart', checkAuthenticated, async (req, res) => {
   const customer_id = req.session.user.customer_id;
   try {
@@ -1028,9 +1045,13 @@ app.get('/cart', checkAuthenticated, async (req, res) => {
       JOIN books b ON c.book_id = b.book_id
       WHERE c.customer_id = ?`, [customer_id]
     );
-    // Convert DECIMAL strings to numbers
-    items = items.map(i => ({ ...i, price: parseFloat(i.price) }));
+    // Convert DECIMAL strings to numbers so .toFixed works
+    items = items.map(i => ({ 
+      ...i, 
+      price: parseFloat(i.price) 
+    }));
     const total = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+
     return res.render('cart/cart_list', {
       user:     req.session.user,
       items,
@@ -1040,20 +1061,21 @@ app.get('/cart', checkAuthenticated, async (req, res) => {
     });
   } catch (err) {
     console.error('Cart route error:', err);
-    // DEBUG: send full stack to browser
     return res.status(500).send(`<pre>${err.stack}</pre>`);
   }
 });
 
-// Update: adjust quantity
+// Update: adjust quantity on cart list
 app.post('/cart/:id/update', checkAuthenticated, async (req, res) => {
   const cartItemId  = req.params.id;
   const qty         = parseInt(req.body.quantity, 10);
   const customer_id = req.session.user.customer_id;
+
   if (isNaN(qty) || qty < 1) {
     req.flash('error', 'Quantity must be at least 1.');
     return res.redirect('/cart');
   }
+
   try {
     await db.query(
       'UPDATE cart SET quantity = ? WHERE cart_id = ? AND customer_id = ?',
