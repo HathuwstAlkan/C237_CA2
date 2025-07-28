@@ -141,7 +141,7 @@ app.get('/', (req, res) => {
 });
 
 // Explicit Login Page
-app.get('/login', (req, res) => {
+app.get('/partials/login', (req, res) => {
     res.render('partials/login', {
         messages: req.flash('success'),
         errors: req.flash('error')
@@ -149,15 +149,14 @@ app.get('/login', (req, res) => {
 });
 
 // Explicit Register Page
-app.get('/register', (req, res) => {
+app.get('/partials/register', (req, res) => {
     const formData = req.flash('formData')[0] || {};
-    res.render('partialsregister', {
+    res.render('partials/register', {
         formData,
         messages: req.flash('success'),
         errors: req.flash('error')
     });
 });
-
 
 // Registration POST
 app.post('/register', async (req, res) => {
@@ -173,7 +172,6 @@ app.post('/register', async (req, res) => {
         } = req.body;
 
         const errors = [];
-
         if (!username || !first_name || !last_name || !email || !password) {
             errors.push('Username, first name, last name, email, and password are required.');
         }
@@ -182,6 +180,9 @@ app.post('/register', async (req, res) => {
         }
 
         if (errors.length) {
+            if (req.xhr || req.headers.accept.includes('json')) {
+                return res.json({ success: false, errors, formData: req.body });
+            }
             req.flash('error', errors);
             req.flash('formData', req.body); // Preserve form data
             return res.redirect('/register');
@@ -196,15 +197,21 @@ app.post('/register', async (req, res) => {
             [username, password_hash, first_name, last_name, email, phone_number || null, address || null]
         );
 
+        if (req.xhr || req.headers.accept.includes('json')) {
+            return res.json({ success: true, message: 'Registration successful! Please log in.', redirectUrl: '/login' });
+        }
         req.flash('success', 'Registration successful! Please log in.');
         return res.redirect('/login');
     } catch (err) {
         console.error('Error during registration:', err);
-        const serverErrors = [];
+        let serverErrors = [];
         if (err && err.code === 'ER_DUP_ENTRY') {
             serverErrors.push('Username or email already exists.');
         } else {
             serverErrors.push('Registration failed. Please try again.');
+        }
+        if (req.xhr || req.headers.accept.includes('json')) {
+            return res.json({ success: false, errors: serverErrors, formData: req.body });
         }
         req.flash('error', serverErrors);
         req.flash('formData', req.body); // Preserve form data
@@ -217,7 +224,11 @@ app.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
         if (!email || !password) {
-            req.flash('error', 'Email and password are required.');
+            const errors = ['Email and password are required.'];
+            if (req.xhr || req.headers.accept.includes('json')) {
+                return res.json({ success: false, errors });
+            }
+            req.flash('error', errors);
             return res.redirect('/login');
         }
 
@@ -226,14 +237,22 @@ app.post('/login', async (req, res) => {
             [email]
         );
         if (!rows || rows.length === 0) {
-            req.flash('error', 'Invalid email or password.');
+            const errors = ['Invalid email or password.'];
+            if (req.xhr || req.headers.accept.includes('json')) {
+                return res.json({ success: false, errors });
+            }
+            req.flash('error', errors);
             return res.redirect('/login');
         }
 
         const user = rows[0];
         const ok = await bcrypt.compare(password, user.password_hash);
         if (!ok) {
-            req.flash('error', 'Invalid email or password.');
+            const errors = ['Invalid email or password.'];
+            if (req.xhr || req.headers.accept.includes('json')) {
+                return res.json({ success: false, errors });
+            }
+            req.flash('error', errors);
             return res.redirect('/login');
         }
 
@@ -246,14 +265,21 @@ app.post('/login', async (req, res) => {
             email: user.email,
             phone_number: user.phone_number,
             address: user.address,
-            profile_image_url: user.profile_image_url // Store profile image URL in session
+            profile_image_url: user.profile_image_url
         };
 
+        if (req.xhr || req.headers.accept.includes('json')) {
+            return res.json({ success: true, message: 'Login successful!', redirectUrl: '/dashboard' });
+        }
         req.flash('success', 'Login successful.');
         return res.redirect('/dashboard');
     } catch (err) {
         console.error('Error during login:', err);
-        req.flash('error', 'Login failed. Please try again.');
+        const errors = ['Login failed. Please try again.'];
+        if (req.xhr || req.headers.accept.includes('json')) {
+            return res.json({ success: false, errors });
+        }
+        req.flash('error', errors);
         return res.redirect('/login');
     }
 });
