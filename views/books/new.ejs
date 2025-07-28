@@ -67,7 +67,26 @@
                 <label for="description" class="form-label">Description</label>
                 <textarea class="form-control" id="description" name="description" rows="5"><%= formData.description || '' %></textarea>
             </div>
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <label class="form-label">Publisher *</label>
+                    <select name="publisher_id" class="form-select" required>
+                    <option value="">-- Select Publisher --</option>
+                    <% (publishers || []).forEach(function(p){ %>
+                        <option value="<%= p.publisher_id %>"
+                        <%= (formData && String(formData.publisher_id) === String(p.publisher_id)) ? 'selected' : '' %>>
+                        <%= p.name %>
+                        </option>
+                    <% }) %>
+                    </select>
+                </div>
 
+                <div class="col-md-4">
+                    <label class="form-label">Initial Stock *</label>
+                    <input type="number" class="form-control" name="stock_quantity" min="0" step="1"
+                        value="<%= (formData && formData.stock_quantity) != null ? formData.stock_quantity : 0 %>" required>
+                </div>
+            </div>
             <div class="d-flex gap-2">
                 <a href="/admin/books" class="btn btn-outline-secondary">Cancel</a>
                 <button type="submit" class="btn btn-primary">Add Book</button>

@@ -715,20 +715,32 @@ app.get('/admin/books', checkAuthenticated, checkAdmin, async (req, res) => {
 // books: NEW form (admin only)
 // ==============================
 app.get('/books/new', checkAuthenticated, checkAdmin, async (req, res) => {
+  try {
+    const [publishers] = await db.query(
+      'SELECT publisher_id, name FROM Publishers ORDER BY name ASC'
+    );
+
     res.render('books/new', {
-        user: req.session.user,
-        formData: {},
-        errors: req.flash('error'),
-        messages: req.flash('success')
+      user: req.session.user,
+      publishers,           // <-- pass the list of publishers
+      formData: req.flash('formData')[0] || {},
+      errors: req.flash('error'),
+      messages: req.flash('success')
     });
+  } catch (err) {
+    console.error('Error loading new book form:', err);
+    req.flash('error', 'Could not load new book form.');
+    res.redirect('/books');
+  }
 });
+
 
 // ==============================
 // books: CREATE (admin only)
 // ==============================
 app.post('/books', checkAuthenticated, checkAdmin, upload.single('image_file'), async (req, res) => {
     try {
-        const { title, author, isbn, genre, price, published_year, published_date, image_url, description } = req.body;
+        const { title, author, isbn, genre, price, published_year, published_date, image_url, description, publisher_id, stock_quantity } = req.body;
         const errors = [];
 
         if (!title || !author || !isbn || !price) errors.push('Title, author, ISBN, and price are required.');
@@ -736,6 +748,11 @@ app.post('/books', checkAuthenticated, checkAdmin, upload.single('image_file'), 
         if (published_year && (isNaN(published_year) || published_year < 1500 || published_year > (new Date().getFullYear()+1))) {
             errors.push('Published year is invalid.');
         }
+        if (!publisher_id) errors.push('Publisher is required.');
+        const qty = (stock_quantity === '' || stock_quantity == null)
+            ? 0
+            : parseInt(stock_quantity, 10);
+        if (isNaN(qty) || qty < 0) errors.push('Initial stock must be a non-negative integer.');
 
         if (errors.length) {
             req.flash('error', errors);
@@ -760,6 +777,13 @@ app.post('/books', checkAuthenticated, checkAdmin, upload.single('image_file'), 
                 finalImageUrl, // Use the determined image URL
                 description || null
             ]
+        );
+
+        await db.query(
+            `INSERT INTO Stocks (book_id, publisher_id, quantity)
+            VALUES (?, ?, ?)
+            ON DUPLICATE KEY UPDATE quantity = VALUES(quantity)`,
+            [newBookId, parseInt(publisher_id, 10), qty]
         );
 
         req.flash('success', 'Book created.');
