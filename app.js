@@ -945,37 +945,56 @@ app.post('/books/:id/delete', checkAuthenticated, checkAdmin, async (req, res) =
 // books: SHOW (individual book) - This is for customer view of a single book
 // Public: viewable by all
 // ==============================
+// books: SHOW (individual book)
 app.get('/books/:id', async (req, res) => {
-    try {
-        const id = req.params.id;
-        const [rows] = await db.query(
-            `SELECT book_id, title, author, isbn, genre, price, published_year, image_url, description
-             FROM books WHERE book_id = ? LIMIT 1`, [id]
-        );
-        if (!rows.length) {
-            req.flash('error', 'Book not found.');
-            return res.redirect('/books'); // Redirect to customer books list
-        }
-        const book = rows[0];
+  try {
+    const id = req.params.id;
 
-        // Related books: same genre, not the same book
-        const [related] = await db.query(
-            `SELECT book_id, title, author, price, image_url
-             FROM books WHERE genre <=> ? AND book_id <> ? ORDER BY title ASC LIMIT 6`,
-            [book.genre, id]
-        );
-
-        res.render('books/show', {
-            user: req.session.user,
-            book,
-            related
-        });
-    } catch (err) {
-        console.error('Error showing book:', err);
-        req.flash('error', 'Could not load book.');
-        res.redirect('/books'); // Redirect to customer books list
+    // current book
+    const [rows] = await db.query(
+      `SELECT book_id, title, author, isbn, genre, price, published_year, image_url, description
+       FROM books WHERE book_id = ? LIMIT 1`, [id]
+    );
+    if (!rows.length) {
+      req.flash('error', 'Book not found.');
+      return res.redirect('/books');
     }
+    const book = rows[0];
+
+    // publishers for this book (based on stocks)
+    const [publishers] = await db.query(
+      `SELECT p.publisher_id, p.name
+         FROM publishers p
+         JOIN stocks s ON s.publisher_id = p.publisher_id
+        WHERE s.book_id = ?
+        GROUP BY p.publisher_id, p.name
+        ORDER BY p.name ASC`,
+      [id]
+    );
+
+    // related books
+    const [related] = await db.query(
+      `SELECT book_id, title, author, price, image_url
+         FROM books
+        WHERE genre <=> ? AND book_id <> ?
+        ORDER BY title ASC
+        LIMIT 6`,
+      [book.genre, id]
+    );
+
+    res.render('books/show', {
+      user: req.session.user,
+      book,
+      publishers,   // <-- pass it to the view
+      related
+    });
+  } catch (err) {
+    console.error('Error showing book:', err);
+    req.flash('error', 'Could not load book.');
+    res.redirect('/books');
+  }
 });
+
 
 // ─── Cart routes ───
 

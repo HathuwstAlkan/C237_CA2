@@ -26,6 +26,13 @@
           <p class="mb-1"><strong>Author:</strong> <%= book.author || '-' %></p>
           <p class="mb-1"><strong>ISBN:</strong> <%= book.isbn || '-' %></p>
           <p class="mb-1"><strong>Genre:</strong> <%= book.genre || '-' %></p>
+          <% if (publishers && publishers.length) { %>
+            <li class="list-group-item">
+              <strong>Publisher<%= publishers.length > 1 ? 's' : '' %>:</strong>
+              <%= publishers.map(p => p.name).join(', ') %>
+            </li>
+          <% } %>
+
           <p class="mb-1"><strong>Published year:</strong> <%= book.published_year || '-' %></p>
           <p class="mb-3"><strong>Price:</strong> $<%= Number(book.price).toFixed(2) %></p>
 
