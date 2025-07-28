@@ -119,13 +119,13 @@ const checkAuthenticated = (req, res, next) => {
         return res.status(401).json({ success: false, errors: ['Please log in to view this resource.'] });
     }
     req.flash('error', 'Please log in to view this resource.');
-    return res.redirect('/login');
+    return res.redirect('partials/login');
 };
 
 const checkAdmin = (req, res, next) => {
     if (!req.session.user) {
         req.flash('error', 'Access denied: Please log in.');
-        return res.redirect('/login');
+        return res.redirect('partials/login');
     }
     if (req.session.user.role === 'admin') return next();
     req.flash('error', 'Access denied: You must be an administrator.');
@@ -198,10 +198,10 @@ app.post('/register', async (req, res) => {
         );
 
         if (req.xhr || req.headers.accept.includes('json')) {
-            return res.json({ success: true, message: 'Registration successful! Please log in.', redirectUrl: '/login' });
+            return res.json({ success: true, message: 'Registration successful! Please log in.', redirectUrl: 'partials/login' });
         }
         req.flash('success', 'Registration successful! Please log in.');
-        return res.redirect('/login');
+        return res.redirect('partials/login');
     } catch (err) {
         console.error('Error during registration:', err);
         let serverErrors = [];
@@ -229,7 +229,7 @@ app.post('/login', async (req, res) => {
                 return res.json({ success: false, errors });
             }
             req.flash('error', errors);
-            return res.redirect('/login');
+            return res.redirect('partials/login');
         }
 
         const [rows] = await db.query(
@@ -242,7 +242,7 @@ app.post('/login', async (req, res) => {
                 return res.json({ success: false, errors });
             }
             req.flash('error', errors);
-            return res.redirect('/login');
+            return res.redirect('partials/login');
         }
 
         const user = rows[0];
@@ -253,7 +253,7 @@ app.post('/login', async (req, res) => {
                 return res.json({ success: false, errors });
             }
             req.flash('error', errors);
-            return res.redirect('/login');
+            return res.redirect('partials/login');
         }
 
         const ok = await bcrypt.compare(password, user.password_hash);
@@ -263,7 +263,7 @@ app.post('/login', async (req, res) => {
                 return res.json({ success: false, errors });
             }
             req.flash('error', errors);
-            return res.redirect('/login');
+            return res.redirect('partials/login');
         }
 
         req.session.user = {
@@ -290,14 +290,14 @@ app.post('/login', async (req, res) => {
             return res.json({ success: false, errors });
         }
         req.flash('error', errors);
-        return res.redirect('/login');
+        return res.redirect('partials/login');
     }
 });
 
 // Logout
 app.get('/logout', (req, res) => {
     req.session.destroy(() => {
-        res.redirect('/login'); // Always redirect to login after logout
+        res.redirect('/'); // Always redirect to registration after logout
     });
 });
 
@@ -320,7 +320,7 @@ app.get('/profile', checkAuthenticated, async (req, res) => {
         const [rows] = await db.query('SELECT customer_id, username, first_name, last_name, email, phone_number, address, role, last_address_update, profile_image_url FROM customers WHERE customer_id = ?', [req.session.user.customer_id]);
         if (rows.length === 0) {
             req.flash('error', 'User not found.');
-            return res.redirect('/login');
+            return res.redirect('partials/login');
         }
         res.render('profile', {
             user: rows[0],

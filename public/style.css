@@ -8,14 +8,14 @@
     --text-shadow-color: rgba(255, 255, 255, 0.6); /* Lighter shadow for dark text */
     --frame-shadow-color: rgba(0, 0, 0, 0.2); /* Lighter shadow for the frame */
 
-    --navbar-bg: #f8f9fa; /* Light background for navbar */
-    --navbar-link-color: rgba(0, 0, 0, 0.75);
-    --navbar-link-hover-color: #000000;
+    --navbar-bg: #212529; /* Changed: Dark background for navbar in light mode */
+    --navbar-link-color: rgba(255, 255, 255, 0.75); /* Changed: Light text for links */
+    --navbar-link-hover-color: #ffffff; /* Changed: White text on hover */
     --navbar-active-link-color: #007bff; /* Bootstrap primary blue for active links */
-    --navbar-active-link-bg: rgba(0, 0, 0, 0.05); /* Subtle background for active links */
-    --dropdown-bg: #ffffff; /* White dropdown background */
-    --dropdown-link-color: rgba(0, 0, 0, 0.85);
-    --dropdown-link-hover-bg: rgba(0, 0, 0, 0.05);
+    --navbar-active-link-bg: rgba(255, 255, 255, 0.08); /* Subtle background for active links */
+    --dropdown-bg: #343a40; /* Darker dropdown background */
+    --dropdown-link-color: rgba(255, 255, 255, 0.85);
+    --dropdown-link-hover-bg: rgba(255, 255, 255, 0.1);
     --badge-bg-color: #28a745; /* Green for cart badge */
 
     /* Main content background for light mode */
