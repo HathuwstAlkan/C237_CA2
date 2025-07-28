@@ -716,7 +716,7 @@ app.get('/admin/books', checkAuthenticated, checkAdmin, async (req, res) => {
 app.get('/books/new', checkAuthenticated, checkAdmin, async (req, res) => {
   try {
     const [publishers] = await db.query(
-      'SELECT publisher_id, name FROM Publishers ORDER BY name ASC'
+      'SELECT publisher_id, name FROM publishers ORDER BY name ASC'
     );
 
     res.render('books/new', {
@@ -787,7 +787,7 @@ app.post('/books', checkAuthenticated, checkAdmin, upload.single('image_file'), 
 
     // INSERT/UPSERT initial stock ✔
     await db.query(
-      `INSERT INTO Stocks (book_id, publisher_id, quantity)
+      `INSERT INTO stocks (book_id, publisher_id, quantity)
        VALUES (?, ?, ?)
        ON DUPLICATE KEY UPDATE quantity = VALUES(quantity)`,
       [newBookId, parseInt(publisher_id, 10), qty]
@@ -817,7 +817,7 @@ app.get(['/books/:id/edit', '/admin/books/:id/edit'], checkAuthenticated, checkA
     const id = req.params.id;
 
     const [rows] = await db.query(
-      'SELECT * FROM Books WHERE book_id = ? LIMIT 1',
+      'SELECT * FROM books WHERE book_id = ? LIMIT 1',
       [id]
     );
 
@@ -880,7 +880,7 @@ app.post('/books/:id/edit', checkAuthenticated, checkAdmin, async (req, res) => 
     // and then use coverPath instead of image_url below.
 
     await db.query(
-      `UPDATE Books
+      `UPDATE books
        SET title = ?, author = ?, isbn = ?, genre = ?, price = ?, published_year = ?, description = ?, image_url = ?
        WHERE book_id = ?`,
       [
@@ -1251,9 +1251,9 @@ app.get('/admin/stocks', checkAuthenticated, checkAdmin, async (req, res) => {
             SELECT s.book_id, s.publisher_id, s.quantity,
                    b.title, b.image_url,
                    p.name AS publisher_name
-            FROM Stocks s
-            JOIN Books b ON b.book_id = s.book_id
-            JOIN Publishers p ON p.publisher_id = s.publisher_id
+            FROM stocks s
+            JOIN books b ON b.book_id = s.book_id
+            JOIN publishers p ON p.publisher_id = s.publisher_id
             WHERE 1=1`;
         const params = [];
 
@@ -1284,8 +1284,8 @@ app.get('/admin/stocks', checkAuthenticated, checkAdmin, async (req, res) => {
 // ==============================
 app.get('/admin/stocks/new', checkAuthenticated, checkAdmin, async (req, res) => {
     try {
-        const [books] = await db.query('SELECT book_id, title FROM Books ORDER BY title ASC');
-        const [publishers] = await db.query('SELECT publisher_id, name FROM Publishers ORDER BY name ASC');
+        const [books] = await db.query('SELECT book_id, title FROM books ORDER BY title ASC');
+        const [publishers] = await db.query('SELECT publisher_id, name FROM publishers ORDER BY name ASC');
 
         res.render('admin/stocks/new', {
             user: req.session.user,
@@ -1321,7 +1321,7 @@ app.post('/admin/stocks', checkAuthenticated, checkAdmin, async (req, res) => {
         }
 
         await db.query(
-            'INSERT INTO Stocks (book_id, publisher_id, quantity) VALUES (?, ?, ?)',
+            'INSERT INTO stocks (book_id, publisher_id, quantity) VALUES (?, ?, ?)',
             [parseInt(book_id), parseInt(publisher_id), parseInt(quantity)]
         );
 
@@ -1348,9 +1348,9 @@ app.get('/admin/stocks/:book_id/:publisher_id/edit', checkAuthenticated, checkAd
         const [rows] = await db.query(
             `SELECT s.book_id, s.publisher_id, s.quantity,
                     b.title, p.name AS publisher_name
-               FROM Stocks s
-               JOIN Books b ON b.book_id = s.book_id
-               JOIN Publishers p ON p.publisher_id = s.publisher_id
+               FROM stocks s
+               JOIN books b ON b.book_id = s.book_id
+               JOIN publishers p ON p.publisher_id = s.publisher_id
                WHERE s.book_id = ? AND s.publisher_id = ?
                LIMIT 1`,
             [book_id, publisher_id]
@@ -1389,7 +1389,7 @@ app.post('/admin/stocks/:book_id/:publisher_id/edit', checkAuthenticated, checkA
         }
 
         await db.query(
-            'UPDATE Stocks SET quantity = ? WHERE book_id = ? AND publisher_id = ?',
+            'UPDATE stocks SET quantity = ? WHERE book_id = ? AND publisher_id = ?',
             [q, parseInt(book_id), parseInt(publisher_id)]
         );
 
@@ -1410,7 +1410,7 @@ app.post('/admin/stocks/:book_id/:publisher_id/delete', checkAuthenticated, chec
         const { book_id, publisher_id } = req.params;
 
         const [result] = await db.query(
-            'DELETE FROM Stocks WHERE book_id = ? AND publisher_id = ?',
+            'DELETE FROM stocks WHERE book_id = ? AND publisher_id = ?',
             [parseInt(book_id), parseInt(publisher_id)]
         );
 
