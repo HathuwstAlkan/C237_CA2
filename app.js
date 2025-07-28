@@ -1084,6 +1084,47 @@ app.post('/cart/:id/delete', checkAuthenticated, async (req, res) => {
   res.redirect('/cart');
 });
 
+// Create or Increase: handle form POST
+app.post('/cart', checkAuthenticated, async (req, res) => {
+  const { book_id, quantity } = req.body;
+  const customer_id = req.session.user.customer_id;
+  const qty = parseInt(quantity, 10);
+
+  try {
+    // 1) Look for an existing cart entry for this user+book
+    const [[existing]] = await db.query(
+      `SELECT cart_id, quantity
+         FROM cart
+        WHERE customer_id = ? AND book_id = ?`,
+      [ customer_id, book_id ]
+    );
+
+    if (existing) {
+      // 2a) If found, update its quantity
+      await db.query(
+        `UPDATE cart
+            SET quantity = ?
+          WHERE cart_id = ?`,
+        [ existing.quantity + qty, existing.cart_id ]
+      );
+    } else {
+      // 2b) Otherwise insert a new row
+      await db.query(
+        `INSERT INTO cart (customer_id, book_id, quantity)
+         VALUES (?, ?, ?)`,
+        [ customer_id, book_id, qty ]
+      );
+    }
+
+    req.flash('success', 'Cart updated!');
+    res.redirect('/cart');
+  } catch (err) {
+    console.error('Error adding to cart:', err);
+    req.flash('error', 'Could not add to cart. Please try again.');
+    res.redirect('/cart/new');
+  }
+});
+
 // ─── Checkout page ───
 app.get('/checkout', checkAuthenticated, async (req, res) => {
   const customer_id = req.session.user.customer_id;
