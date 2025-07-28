@@ -125,12 +125,22 @@
                     const response = await fetch(form.action, {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded'
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'Accept': 'application/json'
                         },
                         body: formData
                     });
 
-                    const result = await response.json();
+                    // Check if the response is JSON before parsing
+                    const contentType = response.headers.get('content-type');
+                    let result;
+                    if (contentType && contentType.includes('application/json')) {
+                        result = await response.json();
+                    } else {
+                        // Not JSON: probably an HTML error page or redirect
+                        const text = await response.text();
+                        throw new Error('Server returned an unexpected response. Please refresh the page and try again.');
+                    }
 
                     if (result.success) {
                         const successHtml = `<div class="alert alert-success">${result.message}</div>`;
@@ -156,7 +166,6 @@
                     formMessagesDiv.innerHTML = `<div class="alert alert-danger">An unexpected error occurred. Please try again.</div>`;
                 }
             }
-
 
             // Typewriter Effect JavaScript (only runs for desktop view)
             if (window.matchMedia("(min-width: 768px)").matches) {

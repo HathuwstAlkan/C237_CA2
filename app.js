@@ -246,6 +246,16 @@ app.post('/login', async (req, res) => {
         }
 
         const user = rows[0];
+        if (!user.password_hash) {
+            console.error('User found but password_hash is missing:', user);
+            const errors = ['Invalid email or password.'];
+            if (req.xhr || req.headers.accept.includes('json')) {
+                return res.json({ success: false, errors });
+            }
+            req.flash('error', errors);
+            return res.redirect('/login');
+        }
+
         const ok = await bcrypt.compare(password, user.password_hash);
         if (!ok) {
             const errors = ['Invalid email or password.'];
@@ -274,7 +284,7 @@ app.post('/login', async (req, res) => {
         req.flash('success', 'Login successful.');
         return res.redirect('/dashboard');
     } catch (err) {
-        console.error('Error during login:', err);
+        console.error('Error during login:', err); // This will show the real error in your terminal
         const errors = ['Login failed. Please try again.'];
         if (req.xhr || req.headers.accept.includes('json')) {
             return res.json({ success: false, errors });
