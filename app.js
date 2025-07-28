@@ -959,9 +959,10 @@ app.get('/cart/new', checkAuthenticated, async (req, res) => {
   try {
     const [books] = await db.query('SELECT book_id, title FROM books');
     res.render('cart/create_cart_item', {
-      user:   req.session.user,
+      user:     req.session.user,
       books,
-      errors: req.flash('error')
+      errors:   req.flash('error'),
+      messages: req.flash('success')
     });
   } catch (err) {
     console.error('Error loading create cart item form:', err);
@@ -980,25 +981,32 @@ app.post('/cart', checkAuthenticated, async (req, res) => {
       [customer_id, book_id, quantity]
     );
     req.flash('success', 'Book added to cart successfully!');
-    res.redirect('/cart');
+    return res.redirect('/cart');
   } catch (err) {
     console.error('Error adding to cart:', err);
     req.flash('error', 'Could not add to cart. Please try again.');
-    res.redirect('/cart/new');
+    return res.redirect('/cart/new');
   }
 });
 
-// Read: list cart items + total
+// Read: list cart items + total (with debug)
 app.get('/cart', checkAuthenticated, async (req, res) => {
   const customer_id = req.session.user.customer_id;
   try {
-    const [items] = await db.query(`
-      SELECT c.cart_item_id, b.title, b.price, c.quantity
-        FROM cart c
-        JOIN books b ON c.book_id = b.book_id
-       WHERE c.customer_id = ?`, [customer_id]);
+    let [items] = await db.query(`
+      SELECT
+        c.cart_id      AS cart_item_id,
+        b.title,
+        b.price,
+        c.quantity
+      FROM cart c
+      JOIN books b ON c.book_id = b.book_id
+      WHERE c.customer_id = ?`, [customer_id]
+    );
+    // Convert DECIMAL strings to numbers
+    items = items.map(i => ({ ...i, price: parseFloat(i.price) }));
     const total = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
-    res.render('cart/cart_list', {
+    return res.render('cart/cart_list', {
       user:     req.session.user,
       items,
       total,
@@ -1006,9 +1014,9 @@ app.get('/cart', checkAuthenticated, async (req, res) => {
       errors:   req.flash('error')
     });
   } catch (err) {
-    console.error('Error fetching cart items:', err);
-    req.flash('error', 'Could not load cart.');
-    res.redirect('/dashboard');
+    console.error('Cart route error:', err);
+    // DEBUG: send full stack to browser
+    return res.status(500).send(`<pre>${err.stack}</pre>`);
   }
 });
 
@@ -1023,7 +1031,7 @@ app.post('/cart/:id/update', checkAuthenticated, async (req, res) => {
   }
   try {
     await db.query(
-      'UPDATE cart SET quantity = ? WHERE cart_item_id = ? AND customer_id = ?',
+      'UPDATE cart SET quantity = ? WHERE cart_id = ? AND customer_id = ?',
       [qty, cartItemId, customer_id]
     );
     req.flash('success', 'Cart updated.');
@@ -1040,7 +1048,7 @@ app.post('/cart/:id/delete', checkAuthenticated, async (req, res) => {
   const customer_id = req.session.user.customer_id;
   try {
     await db.query(
-      'DELETE FROM cart WHERE cart_item_id = ? AND customer_id = ?',
+      'DELETE FROM cart WHERE cart_id = ? AND customer_id = ?',
       [cartItemId, customer_id]
     );
     req.flash('success', 'Item removed.');
@@ -1050,7 +1058,6 @@ app.post('/cart/:id/delete', checkAuthenticated, async (req, res) => {
   }
   res.redirect('/cart');
 });
-
 
 // ==============================
 // Admin: Stocks - LIST (with search)
