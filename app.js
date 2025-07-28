@@ -948,10 +948,10 @@ app.get('/books/:id', async (req, res) => {
 app.get('/cart/new', checkAuthenticated, async (req, res) => {
   try {
     const [books] = await db.query('SELECT book_id, title FROM books');
-    res.render('create_cart_item', {
-      user:     req.session.user,
+    res.render('cart/create_cart_item', {
+      user:   req.session.user,
       books,
-      errors:   req.flash('error')
+      errors: req.flash('error')
     });
   } catch (err) {
     console.error('Error loading create cart item form:', err);
@@ -988,7 +988,7 @@ app.get('/cart', checkAuthenticated, async (req, res) => {
         JOIN books b ON c.book_id = b.book_id
        WHERE c.customer_id = ?`, [customer_id]);
     const total = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
-    res.render('cart_list', {
+    res.render('cart/cart_list', {
       user:     req.session.user,
       items,
       total,
@@ -1040,6 +1040,7 @@ app.post('/cart/:id/delete', checkAuthenticated, async (req, res) => {
   }
   res.redirect('/cart');
 });
+
 
 // ==============================
 // Admin: Stocks - LIST (with search)
