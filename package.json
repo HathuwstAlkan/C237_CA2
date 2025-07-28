@@ -5,6 +5,8 @@
     "ejs": "^3.1.10",
     "express": "^5.1.0",
     "express-session": "^1.18.2",
+    "fs": "^0.0.1-security",
+    "multer": "^2.0.2",
     "mysql2": "^3.14.2",
     "node": "^20.19.4"
   }

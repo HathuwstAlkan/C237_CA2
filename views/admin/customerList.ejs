@@ -5,9 +5,25 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/style.css">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .role-form-group {
+            display: flex;
+            align-items: center;
+            gap: 5px; /* Space between select and buttons */
+        }
+        .role-buttons {
+            display: flex;
+            gap: 3px;
+        }
+        .role-buttons .btn {
+            padding: 0.375rem 0.5rem; /* Smaller padding for icons */
+            font-size: 0.875rem; /* Smaller font size for icons */
+        }
+    </style>
 </head>
 <body>
-    <!-- Root-level view ⇒ include from 'partials/...' -->
     <%- include('../partials/navbar', { user: user, activePage: 'customers' }) %>
 
     <div class="container py-4">
@@ -56,10 +72,21 @@
                                 <td><%= u.last_name %></td>
                                 <td><%= u.email %></td>
                                 <td><%= u.phone_number || 'N/A' %></td>
-                                <td><%= u.role %></td>
                                 <td>
-                                    <!-- Edit User Button -->
-                                    <a href="/customers/edit/<%= u.customer_id %>" class="btn btn-sm btn-info me-2">Edit</a>
+                                    <form action="/customers/update-role/<%= u.customer_id %>" method="POST" class="role-form-group">
+                                        <!-- Hidden input to store the original role for comparison -->
+                                        <input type="hidden" name="original_role_<%= u.customer_id %>" value="<%= u.role %>">
+                                        <select name="role" class="form-select form-select-sm" id="role-<%= u.customer_id %>">
+                                            <option value="regular" <%= u.role === 'regular' ? 'selected' : '' %>>Regular</option>
+                                            <option value="admin" <%= u.role === 'admin' ? 'selected' : '' %>>Admin</option>
+                                        </select>
+                                        <div class="role-buttons" style="display:none;" id="role-buttons-<%= u.customer_id %>">
+                                            <button type="submit" class="btn btn-success btn-sm" title="Confirm"><i class="fas fa-check"></i></button>
+                                            <button type="button" class="btn btn-danger btn-sm cancel-role-edit" data-id="<%= u.customer_id %>" title="Cancel"><i class="fas fa-times"></i></button>
+                                        </div>
+                                    </form>
+                                </td>
+                                <td>
                                     <form action="/customers/delete/<%= u.customer_id %>" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this user?');">
                                         <button type="submit" class="btn btn-sm btn-danger">Delete</button>
                                     </form>
@@ -75,5 +102,38 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.role-form-group select').forEach(selectElement => {
+                const userId = selectElement.id.replace('role-', '');
+                const originalRoleInput = document.querySelector(`input[name="original_role_${userId}"]`);
+                const buttonsDiv = document.getElementById(`role-buttons-${userId}`);
+
+                // Set initial original role from hidden input
+                const initialOriginalRole = originalRoleInput.value;
+
+                selectElement.addEventListener('change', function() {
+                    // Show buttons if current value is different from original value
+                    if (this.value !== initialOriginalRole) {
+                        buttonsDiv.style.display = 'flex';
+                    } else {
+                        buttonsDiv.style.display = 'none';
+                    }
+                });
+
+                // Handle cancel button click
+                const cancelButton = buttonsDiv.querySelector('.cancel-role-edit');
+                if (cancelButton) {
+                    cancelButton.addEventListener('click', function(event) {
+                        event.preventDefault(); // Prevent form submission
+                        selectElement.value = initialOriginalRole; // Revert to original role
+                        buttonsDiv.style.display = 'none'; // Hide buttons
+                    });
+                }
+            });
+        });
+    </script>
 </body>
 </html>
+
+
