@@ -142,7 +142,7 @@ app.get('/', (req, res) => {
 
 // Explicit Login Page
 app.get('/login', (req, res) => {
-    res.render('login', {
+    res.render('partials/login', {
         messages: req.flash('success'),
         errors: req.flash('error')
     });
@@ -151,7 +151,7 @@ app.get('/login', (req, res) => {
 // Explicit Register Page
 app.get('/register', (req, res) => {
     const formData = req.flash('formData')[0] || {};
-    res.render('register', {
+    res.render('partialsregister', {
         formData,
         messages: req.flash('success'),
         errors: req.flash('error')
