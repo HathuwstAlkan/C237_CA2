@@ -1084,6 +1084,99 @@ app.post('/cart/:id/delete', checkAuthenticated, async (req, res) => {
   res.redirect('/cart');
 });
 
+// ─── Checkout page ───
+app.get('/checkout', checkAuthenticated, async (req, res) => {
+  const customer_id = req.session.user.customer_id;
+  try {
+    // pull your cart items + book info
+    let [items] = await db.query(`
+      SELECT
+        c.cart_id      AS cart_item_id,
+        b.title,
+        b.price,
+        c.quantity
+      FROM cart c
+      JOIN books b ON c.book_id = b.book_id
+      WHERE c.customer_id = ?`, [customer_id]
+    );
+    // convert decimal strings to numbers
+    items = items.map(i => ({ ...i, price: parseFloat(i.price) }));
+    const total = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+
+    return res.render('cart/checkout', {
+      user:     req.session.user,
+      items,
+      total,
+      messages: req.flash('success'),
+      errors:   req.flash('error')
+    });
+  } catch (err) {
+    console.error('Error loading checkout:', err);
+    req.flash('error', 'Could not load checkout.');
+    return res.redirect('/cart');
+  }
+});
+
+// ─── PayPal callback: record payment & clear cart ───
+app.post('/payment-complete', checkAuthenticated, async (req, res) => {
+  const customer_id     = req.session.user.customer_id;
+  const { amount, transactionID } = req.body;
+
+  try {
+    // Record into total_amount & payment_method
+    await db.query(
+      `INSERT INTO payments
+         (customer_id, total_amount, payment_method)
+       VALUES (?, ?, ?)`,
+      [customer_id, amount, transactionID]
+    );
+
+    // Clear the cart
+    await db.query('DELETE FROM cart WHERE customer_id = ?', [customer_id]);
+
+    return res.json({ success: true });
+  } catch (err) {
+    console.error('Error in /payment-complete:', err);
+    return res.json({ success: false, error: err.message });
+  }
+});
+
+// ─── Fake Quick‑Pay (no PayPal) ───
+app.post('/checkout/fake', checkAuthenticated, async (req, res) => {
+  const customer_id = req.session.user.customer_id;
+  try {
+    // Recompute total server‑side
+    const [items] = await db.query(`
+      SELECT b.price, c.quantity
+      FROM cart c
+      JOIN books b ON c.book_id = b.book_id
+      WHERE c.customer_id = ?`, [customer_id]
+    );
+    const total = items
+      .map(i => parseFloat(i.price) * i.quantity)
+      .reduce((sum, v) => sum + v, 0);
+
+    // Record fake payment under payment_method = 'FakePay'
+    await db.query(
+      `INSERT INTO payments
+         (customer_id, total_amount, payment_method)
+       VALUES (?, ?, 'FakePay')`,
+      [customer_id, total]
+    );
+
+    // Clear the cart
+    await db.query('DELETE FROM cart WHERE customer_id = ?', [customer_id]);
+
+    req.flash('success', 'Quick Pay successful! (This was a fake payment.)');
+    res.redirect('/dashboard');
+  } catch (err) {
+    console.error('Fake checkout error:', err);
+    req.flash('error', 'Quick Pay failed. Please try again.');
+    res.redirect('/checkout');
+  }
+});
+
+
 // ==============================
 // Admin: Stocks - LIST (with search)
 // ==============================
