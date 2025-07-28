@@ -39,11 +39,6 @@
         <label class="form-label">Published Year</label>
         <input type="number" class="form-control" name="published_year" value="<%= book.published_year || '' %>">
       </div>
-      <div class="col-md-4 mb-3">
-        <label class="form-label">Published Date</label>
-        <input type="date" class="form-control" name="published_date" value="<%= book.published_date ? book.published_date.toISOString ? book.published_date.toISOString().slice(0,10) : book.published_date : '' %>">
-      </div>
-    </div>
     <div class="mb-3">
       <label class="form-label">Image URL</label>
       <input type="url" class="form-control" name="image_url" value="<%= book.image_url || '' %>">

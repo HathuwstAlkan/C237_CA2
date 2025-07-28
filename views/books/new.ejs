@@ -55,10 +55,6 @@
                 <input type="number" class="form-control" id="published_year" name="published_year" min="1500" max="<%= new Date().getFullYear() + 1 %>" value="<%= formData.published_year || '' %>">
             </div>
             <div class="mb-3">
-                <label for="published_date" class="form-label">Published Date</label>
-                <input type="date" class="form-control" id="published_date" name="published_date" value="<%= formData.published_date || '' %>">
-            </div>
-            <div class="mb-3">
                 <label for="image_url" class="form-label">Image URL (Optional)</label>
                 <input type="url" class="form-control" id="image_url" name="image_url" placeholder="Enter image URL" value="<%= formData.image_url || '' %>">
                 <div class="form-text">Provide a direct link to the book cover image. If left empty, a default placeholder will be used.</div>
@@ -67,7 +63,26 @@
                 <label for="description" class="form-label">Description</label>
                 <textarea class="form-control" id="description" name="description" rows="5"><%= formData.description || '' %></textarea>
             </div>
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <label class="form-label">Publisher *</label>
+                    <select name="publisher_id" class="form-select" required>
+                    <option value="">-- Select Publisher --</option>
+                    <% (publishers || []).forEach(function(p){ %>
+                        <option value="<%= p.publisher_id %>"
+                        <%= (formData && String(formData.publisher_id) === String(p.publisher_id)) ? 'selected' : '' %>>
+                        <%= p.name %>
+                        </option>
+                    <% }) %>
+                    </select>
+                </div>
 
+                <div class="col-md-4">
+                    <label class="form-label">Initial Stock *</label>
+                    <input type="number" class="form-control" name="stock_quantity" min="0" step="1"
+                        value="<%= (formData && formData.stock_quantity) != null ? formData.stock_quantity : 0 %>" required>
+                </div>
+            </div>
             <div class="d-flex gap-2">
                 <a href="/admin/books" class="btn btn-outline-secondary">Cancel</a>
                 <button type="submit" class="btn btn-primary">Add Book</button>
