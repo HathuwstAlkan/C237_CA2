@@ -541,7 +541,12 @@ app.post('/customers/delete/:id', checkAuthenticated, checkAdmin, async (req, re
     }
 });
 
+<<<<<<< HEAD
 // Admin: individual book page (details + admin actions) - This is for viewing a single book as admin
+=======
+
+// Admin: individual book page (details + admin actions)
+>>>>>>> adb75314aa824b28fdc621103d4d8508665240f7
 app.get('/admin/books/:id', checkAuthenticated, checkAdmin, async (req, res) => {
     try {
         const id = req.params.id;
@@ -916,39 +921,43 @@ app.get('/books/:id', async (req, res) => {
     }
 });
 
-// cart routes
+// ─── Cart routes ───
+
+// Render “Add to Cart” form
 app.get('/cart/new', checkAuthenticated, async (req, res) => {
-    try {
-        const [books] = await db.query('SELECT book_id, title FROM books');
-        res.render('create_cart_item', {
-            user: req.session.user,
-            books,
-            messages: req.flash('error')
-        });
-    } catch (err) {
-        console.error('Error loading create cart item form:', err);
-        req.flash('error', 'Could not load cart item form.');
-        res.redirect('/dashboard');
-    }
+  try {
+    const [books] = await db.query('SELECT book_id, title FROM books');
+    res.render('create_cart_item', {
+      user:     req.session.user,
+      books,
+      errors:   req.flash('error')
+    });
+  } catch (err) {
+    console.error('Error loading create cart item form:', err);
+    req.flash('error', 'Could not load cart item form.');
+    res.redirect('/dashboard');
+  }
 });
 
+// Create: handle form POST
 app.post('/cart', checkAuthenticated, async (req, res) => {
-    const { book_id, quantity } = req.body;
-    const customer_id = req.session.user.customer_id;
-    try {
-        await db.query(
-            'INSERT INTO cart (customer_id, book_id, quantity) VALUES (?, ?, ?)',
-            [customer_id, book_id, quantity]
-        );
-        req.flash('success', 'Book added to cart successfully!');
-        res.redirect('/dashboard');
-    } catch (err) {
-        console.error('Error adding to cart:', err);
-        req.flash('error', 'Could not add to cart. Please try again.');
-        res.redirect('/cart/new');
-    }
+  const { book_id, quantity } = req.body;
+  const customer_id = req.session.user.customer_id;
+  try {
+    await db.query(
+      'INSERT INTO cart (customer_id, book_id, quantity) VALUES (?, ?, ?)',
+      [customer_id, book_id, quantity]
+    );
+    req.flash('success', 'Book added to cart successfully!');
+    res.redirect('/cart');
+  } catch (err) {
+    console.error('Error adding to cart:', err);
+    req.flash('error', 'Could not add to cart. Please try again.');
+    res.redirect('/cart/new');
+  }
 });
 
+<<<<<<< HEAD
 app.post('/cart/delete/:id', checkAuthenticated, async (req, res) => {
     const cartItemId = req.params.id;
     const customerId = req.session.user.customer_id;
@@ -968,6 +977,69 @@ app.post('/cart/delete/:id', checkAuthenticated, async (req, res) => {
         req.flash('error', 'Error deleting cart item.');
         res.status(500).redirect('/dashboard');
     }
+=======
+// Read: list cart items + total
+app.get('/cart', checkAuthenticated, async (req, res) => {
+  const customer_id = req.session.user.customer_id;
+  try {
+    const [items] = await db.query(`
+      SELECT c.cart_item_id, b.title, b.price, c.quantity
+        FROM cart c
+        JOIN books b ON c.book_id = b.book_id
+       WHERE c.customer_id = ?`, [customer_id]);
+    const total = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+    res.render('cart_list', {
+      user:     req.session.user,
+      items,
+      total,
+      messages: req.flash('success'),
+      errors:   req.flash('error')
+    });
+  } catch (err) {
+    console.error('Error fetching cart items:', err);
+    req.flash('error', 'Could not load cart.');
+    res.redirect('/dashboard');
+  }
+});
+
+// Update: adjust quantity
+app.post('/cart/:id/update', checkAuthenticated, async (req, res) => {
+  const cartItemId  = req.params.id;
+  const qty         = parseInt(req.body.quantity, 10);
+  const customer_id = req.session.user.customer_id;
+  if (isNaN(qty) || qty < 1) {
+    req.flash('error', 'Quantity must be at least 1.');
+    return res.redirect('/cart');
+  }
+  try {
+    await db.query(
+      'UPDATE cart SET quantity = ? WHERE cart_item_id = ? AND customer_id = ?',
+      [qty, cartItemId, customer_id]
+    );
+    req.flash('success', 'Cart updated.');
+  } catch (err) {
+    console.error('Error updating cart item:', err);
+    req.flash('error', 'Could not update cart.');
+  }
+  res.redirect('/cart');
+});
+
+// Delete: remove item
+app.post('/cart/:id/delete', checkAuthenticated, async (req, res) => {
+  const cartItemId  = req.params.id;
+  const customer_id = req.session.user.customer_id;
+  try {
+    await db.query(
+      'DELETE FROM cart WHERE cart_item_id = ? AND customer_id = ?',
+      [cartItemId, customer_id]
+    );
+    req.flash('success', 'Item removed.');
+  } catch (err) {
+    console.error('Error deleting cart item:', err);
+    req.flash('error', 'Could not remove item.');
+  }
+  res.redirect('/cart');
+>>>>>>> adb75314aa824b28fdc621103d4d8508665240f7
 });
 
 // ==============================
