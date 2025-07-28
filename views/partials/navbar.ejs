@@ -1,5 +1,5 @@
 <!-- views/partials/navbar.ejs -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+<nav class="navbar navbar-expand-lg">
     <div class="container-fluid">
         <!-- Brand Link: Dynamic based on user login/role -->
         <a class="navbar-brand" href="<%= user ? '/dashboard' : '/' %>">
@@ -72,7 +72,7 @@
                             <li>
                                 <a class="dropdown-item d-flex align-items-center justify-content-between" href="#" id="themeToggle">
                                     <span>Theme</span>
-                                    <span class="theme-icon"><i class="fa-light fa-lightbulb"></i></span> <!-- Initial icon, will change via JS -->
+                                    <span class="theme-icon"><i class="fa-regular fa-lightbulb"></i></span> <!-- Initial icon, will change via JS -->
                                 </a>
                             </li>
                             <li><hr class="dropdown-divider"></li>
@@ -82,10 +82,10 @@
                 <% } else { %>
                     <!-- Login/Sign Up buttons when logged out -->
                     <li class="nav-item">
-                        <a class="btn btn-outline-light btn-sm me-2 <%= typeof activePage !== 'undefined' && activePage === 'login' ? 'active' : '' %>" href="/login">Login</a>
+                        <a class="btn btn-outline-light btn-sm me-2 <%= typeof activePage !== 'undefined' && activePage === 'login' ? 'active' : '' %>" href="/">Login</a>
                     </li>
                     <li class="nav-item">
-                        <a class="btn btn-light btn-sm <%= typeof activePage !== 'undefined' && activePage === 'register' ? 'active' : '' %>" href="/register">Sign Up</a>
+                        <a class="btn btn-light btn-sm <%= typeof activePage !== 'undefined' && activePage === 'register' ? 'active' : '' %>" href="/">Sign Up</a>
                     </li>
                 <% } %>
             </ul>
@@ -108,7 +108,7 @@
             } else {
                 body.classList.remove('dark-mode');
                 body.classList.add('light-mode');
-                if (themeIcon) themeIcon.innerHTML = '<i class="fa-light fa-lightbulb"></i>'; // Light theme icon
+                if (themeIcon) themeIcon.innerHTML = '<i class="fa-regular fa-lightbulb"></i>'; // Light theme icon
             }
             localStorage.setItem('theme', theme);
         }
@@ -127,4 +127,3 @@
         }
     });
 </script>
-
