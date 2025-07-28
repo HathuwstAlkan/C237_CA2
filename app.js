@@ -197,7 +197,7 @@ app.post('/register', async (req, res) => {
         );
 
         if (req.xhr || req.headers.accept.includes('json')) {
-            return res.json({ success: true, message: 'Registration successful! Please log in.', redirectUrl: 'partials/login' });
+            return res.json({ success: true, message: 'Registration successful! Please log in.', redirectUrl: '/' });
         }
         req.flash('success', 'Registration successful! Please log in.');
         return res.redirect('/');
