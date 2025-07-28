@@ -989,8 +989,8 @@ app.post('/cart', checkAuthenticated, async (req, res) => {
   }
 });
 
-// Read: list cart items + total
-app.get('/cart', checkAuthenticated, async (req, res, next) => {
+// Read: list cart items + total (with debug)
+app.get('/cart', checkAuthenticated, async (req, res) => {
   const customer_id = req.session.user.customer_id;
   try {
     let [items] = await db.query(`
@@ -1003,12 +1003,9 @@ app.get('/cart', checkAuthenticated, async (req, res, next) => {
       JOIN books b ON c.book_id = b.book_id
       WHERE c.customer_id = ?`, [customer_id]
     );
-
-    // Convert price (DECIMAL string) to Number
+    // Convert DECIMAL strings to numbers
     items = items.map(i => ({ ...i, price: parseFloat(i.price) }));
-
     const total = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
-
     return res.render('cart/cart_list', {
       user:     req.session.user,
       items,
@@ -1017,7 +1014,9 @@ app.get('/cart', checkAuthenticated, async (req, res, next) => {
       errors:   req.flash('error')
     });
   } catch (err) {
-    return next(err);
+    console.error('Cart route error:', err);
+    // DEBUG: send full stack to browser
+    return res.status(500).send(`<pre>${err.stack}</pre>`);
   }
 });
 
@@ -1026,12 +1025,10 @@ app.post('/cart/:id/update', checkAuthenticated, async (req, res) => {
   const cartItemId  = req.params.id;
   const qty         = parseInt(req.body.quantity, 10);
   const customer_id = req.session.user.customer_id;
-
   if (isNaN(qty) || qty < 1) {
     req.flash('error', 'Quantity must be at least 1.');
     return res.redirect('/cart');
   }
-
   try {
     await db.query(
       'UPDATE cart SET quantity = ? WHERE cart_id = ? AND customer_id = ?',
