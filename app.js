@@ -270,6 +270,68 @@ app.post('/customers/delete/:id', checkAuthenticated, checkAdmin, async (req, re
     }
 });
 
+// ─── Cart routes (Create & List) ───
+
+// Render “Add Item to Cart” form
+app.get('/cart/new', checkAuthenticated, async (req, res) => {
+  try {
+    const [books] = await db.query('SELECT book_id, title FROM books');
+    res.render('create_cart_item', {
+      user: req.session.user,
+      books,
+      errors: req.flash('error')
+    });
+  } catch (err) {
+    console.error('Error loading create cart item form:', err);
+    req.flash('error', 'Could not load cart item form.');
+    res.redirect('/dashboard');
+  }
+});
+
+// Handle form submission (insert into Cart)
+app.post('/cart', checkAuthenticated, async (req, res) => {
+  const { book_id, quantity } = req.body;
+  const customer_id = req.session.user.customer_id;
+  try {
+    await db.query(
+      'INSERT INTO cart (customer_id, book_id, quantity) VALUES (?, ?, ?)',
+      [customer_id, book_id, quantity]
+    );
+    req.flash('success', 'Book added to cart successfully!');
+    res.redirect('/dashboard');
+  } catch (err) {
+    console.error('Error adding to cart:', err);
+    req.flash('error', 'Could not add to cart. Please try again.');
+    res.redirect('/cart/new');
+  }
+});
+
+// List all items in the cart + compute total
+app.get('/cart', checkAuthenticated, async (req, res) => {
+  const customer_id = req.session.user.customer_id;
+  try {
+    const [items] = await db.query(
+      `SELECT c.cart_item_id, b.title, b.price, c.quantity
+         FROM cart c
+         JOIN books b ON c.book_id = b.book_id
+        WHERE c.customer_id = ?`,
+      [customer_id]
+    );
+    const total = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+    res.render('cart_list', {
+      user:     req.session.user,
+      items,
+      total,
+      messages: req.flash('success'),
+      errors:   req.flash('error')
+    });
+  } catch (err) {
+    console.error('Error fetching cart items:', err);
+    req.flash('error', 'Could not load cart.');
+    res.redirect('/dashboard');
+  }
+});
+
 // Admin: individual book page (details + admin actions)
 app.get('/admin/books/:id', checkAuthenticated, checkAdmin, async (req, res) => {
     try {
