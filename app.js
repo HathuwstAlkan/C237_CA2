@@ -1070,16 +1070,6 @@ app.get('/books/:id', async (req, res) => {
       [id]
     );
 
-    // related books
-    const [related] = await db.query(
-      `SELECT book_id, title, author, price, image_url
-         FROM books
-        WHERE genre <=> ? AND book_id <> ?
-        ORDER BY title ASC
-        LIMIT 6`,
-      [book.genre, id]
-    );
-
     res.render('books/show', {
       user: req.session.user,
       book,

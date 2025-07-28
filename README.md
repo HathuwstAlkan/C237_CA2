@@ -22,8 +22,8 @@
 14. Admin Features: Stocks managment
 
 ## What's still in progress
+None - completed all required features + Additional features
 
-None - comeplted all required features + Additional features
 ## Any blockers
 1. Cannot access nor export SQL file due to max_user_connections on filess.io
 2. Ghost area for some extracts of code due to lack of space 
