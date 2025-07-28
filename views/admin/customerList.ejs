@@ -29,8 +29,6 @@
     <div class="container py-4">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h1 class="mb-0">Customers</h1>
-            <!-- Add New Customer button (optional, if you implement this) -->
-            <!-- <a href="/admin/customers/new" class="btn btn-success">Add New Customer</a> -->
         </div>
 
         <% if (messages && messages.length > 0) { %>
@@ -73,7 +71,7 @@
                                 <td><%= u.email %></td>
                                 <td><%= u.phone_number || 'N/A' %></td>
                                 <td>
-                                    <form action="/customers/update-role/<%= u.customer_id %>" method="POST" class="role-form-group">
+                                    <form action="/admin/customers/update-role/<%= u.customer_id %>" method="POST" class="role-form-group">
                                         <!-- Hidden input to store the original role for comparison -->
                                         <input type="hidden" name="original_role_<%= u.customer_id %>" value="<%= u.role %>">
                                         <select name="role" class="form-select form-select-sm" id="role-<%= u.customer_id %>">
@@ -87,7 +85,7 @@
                                     </form>
                                 </td>
                                 <td>
-                                    <form action="/customers/delete/<%= u.customer_id %>" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this user?');">
+                                    <form action="/admin/customers/delete/<%= u.customer_id %>" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this user?');">
                                         <button type="submit" class="btn btn-sm btn-danger">Delete</button>
                                     </form>
                                 </td>

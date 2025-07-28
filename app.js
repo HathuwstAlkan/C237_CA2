@@ -497,7 +497,7 @@ app.post('/profile/update-image', checkAuthenticated, upload.single('profile_ima
 
 
 // customers admin list
-app.get('/customers', checkAuthenticated, checkAdmin, async (req, res) => {
+app.get('/admin/customers', checkAuthenticated, checkAdmin, async (req, res) => {
     try {
         const [users] = await db.query(
             'SELECT customer_id, username, first_name, last_name, email, phone_number, role FROM customers'
@@ -516,7 +516,7 @@ app.get('/customers', checkAuthenticated, checkAdmin, async (req, res) => {
 });
 
 // Admin: Update User Role (from customerList.ejs)
-app.post('/customers/update-role/:id', checkAuthenticated, checkAdmin, async (req, res) => {
+app.post('/admin/customers/update-role/:id', checkAuthenticated, checkAdmin, async (req, res) => {
     const customerId = req.params.id;
     const { role } = req.body;
 
@@ -546,7 +546,7 @@ app.post('/customers/update-role/:id', checkAuthenticated, checkAdmin, async (re
 });
 
 
-app.post('/customers/delete/:id', checkAuthenticated, checkAdmin, async (req, res) => {
+app.post('/admin/customers/delete/:id', checkAuthenticated, checkAdmin, async (req, res) => {
     const userId = req.params.id;
     try {
         // Before deleting customer, delete their profile image if it's an uploaded file
@@ -612,6 +612,7 @@ app.get('/admin/books/:id', checkAuthenticated, checkAdmin, async (req, res) => 
 });
 
 // Customer Books List (Public/Customer View)
+// CUSTOMER BOOKS LIST (Public)
 app.get('/books', async (req, res) => {
     try {
         const { search = '', genre = '', sort = 'title_asc' } = req.query;
@@ -630,7 +631,6 @@ app.get('/books', async (req, res) => {
             params.push(genre);
         }
 
-        // Sorting (Alphabetical by title by default, as requested)
         let orderBy = ' ORDER BY title ASC';
         switch (sort) {
             case 'title_desc': orderBy = ' ORDER BY title DESC'; break;
@@ -647,18 +647,116 @@ app.get('/books', async (req, res) => {
         const [genresRows] = await db.query(`SELECT DISTINCT genre FROM books WHERE genre IS NOT NULL AND genre <> '' ORDER BY genre ASC`);
         const genres = ['All', ...genresRows.map(r => r.genre)];
 
-        res.render('books/index', { // Renders customer-specific books index
+        res.render('books/index', {
             user: req.session.user,
             books,
             genres,
-            q: { search, genre, sort }
+            q: { search, genre, sort },
+            isSimulated: false  // <--- add this!
         });
     } catch (err) {
         console.error('Error listing books:', err);
         req.flash('error', 'Could not load books.');
-        res.redirect('/dashboard'); // Redirect to dashboard on error
+        res.redirect('/dashboard');
     }
 });
+
+// ADMIN BOOKS LIST
+app.get('/admin/books', checkAuthenticated, checkAdmin, async (req, res) => {
+    try {
+        const { search = '', genre = '', sort = 'title_asc' } = req.query;
+
+        let sql = `SELECT book_id, title, author, isbn, genre, price, published_year, image_url
+                   FROM books WHERE 1=1`;
+        const params = [];
+
+        if (search) {
+            const term = `%${search}%`;
+            sql += ` AND (title LIKE ? OR author LIKE ? OR isbn LIKE ?)`;
+            params.push(term, term, term);
+        }
+        if (genre && genre !== 'All') {
+            sql += ` AND genre = ?`;
+            params.push(genre);
+        }
+
+        let orderBy = ' ORDER BY title ASC';
+        switch (sort) {
+            case 'title_desc': orderBy = ' ORDER BY title DESC'; break;
+            case 'author_asc': orderBy = ' ORDER BY author ASC'; break;
+            case 'author_desc': orderBy = ' ORDER BY author DESC'; break;
+            case 'year_desc': orderBy = ' ORDER BY published_year DESC'; break;
+            case 'year_asc': orderBy = ' ORDER BY published_year ASC'; break;
+            case 'price_asc': orderBy = ' ORDER BY price ASC'; break;
+            case 'price_desc': orderBy = ' ORDER BY price DESC'; break;
+        }
+        sql += orderBy;
+
+        const [books] = await db.query(sql, params);
+        const [genresRows] = await db.query(`SELECT DISTINCT genre FROM books WHERE genre IS NOT NULL AND genre <> '' ORDER BY genre ASC`);
+        const genres = ['All', ...genresRows.map(r => r.genre)];
+
+        res.render('books/index', {
+            user: req.session.user,
+            books,
+            genres,
+            q: { search, genre, sort },
+            isSimulated: false  // <--- add this!
+        });
+    } catch (err) {
+        console.error('Error listing admin books:', err);
+        req.flash('error', 'Could not load admin books list.');
+        res.redirect('/admin');
+    }
+});
+
+// ADMIN SIMULATED CUSTOMER VIEW (Partial)
+app.get('/admin/customer-books-partial', checkAuthenticated, checkAdmin, async (req, res) => {
+    try {
+        const { search = '', genre = '', sort = 'title_asc' } = req.query;
+        let sql = `SELECT book_id, title, author, isbn, genre, price, published_year, image_url FROM books WHERE 1=1`;
+        const params = [];
+
+        if (search) {
+            const term = `%${search}%`;
+            sql += ` AND (title LIKE ? OR author LIKE ? OR isbn LIKE ?)`;
+            params.push(term, term, term);
+        }
+        if (genre && genre !== 'All') {
+            sql += ` AND genre = ?`;
+            params.push(genre);
+        }
+
+        let orderBy = ' ORDER BY title ASC';
+        switch (sort) {
+            case 'title_desc': orderBy = ' ORDER BY title DESC'; break;
+            case 'author_asc': orderBy = ' ORDER BY author ASC'; break;
+            case 'author_desc': orderBy = ' ORDER BY author DESC'; break;
+            case 'year_desc': orderBy = ' ORDER BY published_year DESC'; break;
+            case 'year_asc': orderBy = ' ORDER BY published_year ASC'; break;
+            case 'price_asc': orderBy = ' ORDER BY price ASC'; break;
+            case 'price_desc': orderBy = ' ORDER BY price DESC'; break;
+        }
+        sql += orderBy;
+
+        const [books] = await db.query(sql, params);
+        const [genresRows] = await db.query(`SELECT DISTINCT genre FROM books WHERE genre IS NOT NULL AND genre <> '' ORDER BY genre ASC`);
+        const genres = ['All', ...genresRows.map(r => r.genre)];
+
+        // Pass isSimulated: true!
+        res.render('partials/customerViewPartial', {
+            user: req.session.user,
+            books,
+            genres,
+            q: { search, genre, sort },
+            isSimulated: true // <--- add this!
+        });
+    } catch (err) {
+        console.error('Error loading simulated customer view:', err);
+        res.status(500).send('<div class="alert alert-danger">Error loading customer view</div>');
+    }
+});
+
 
 // Admin Books List (for managing books - CRUD)
 app.get('/admin/books', checkAuthenticated, checkAdmin, async (req, res) => {

@@ -1,28 +1,25 @@
 <!-- views/partials/navbar.ejs -->
-<nav class="navbar navbar-expand-lg">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container-fluid">
-        <!-- Brand Link: Dynamic based on user login/role -->
         <a class="navbar-brand" href="<%= user ? '/dashboard' : '/' %>">
             RP Bookstore<%= user && user.role === 'admin' ? ' Admin' : '' %>
         </a>
-
-        <!-- Toggler for mobile navigation -->
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
                 aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
 
-        <!-- Navbar Collapse Content -->
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 <li class="nav-item">
-                    <!-- Books link: active for both customer and admin books pages -->
-                    <a class="nav-link <%= typeof activePage !== 'undefined' && (activePage === 'books' || activePage === 'admin-books') ? 'active' : '' %>" href="/books">Books</a>
+                    <a class="nav-link <%= typeof activePage !== 'undefined' && (activePage === 'books' || activePage === 'admin-books') ? 'active' : '' %>"
+                       href="<%= user && user.role === 'admin' ? '/admin/books' : '/books' %>">
+                        Books
+                    </a>
                 </li>
                 <% if (user && user.role === 'admin') { %>
-                    <!-- Admin specific links (no separate "Admin Dashboard" tab) -->
                     <li class="nav-item">
-                        <a class="nav-link <%= typeof activePage !== 'undefined' && activePage === 'customers' ? 'active' : '' %>" href="/customers">Customers</a>
+                        <a class="nav-link <%= typeof activePage !== 'undefined' && activePage === 'customers' ? 'active' : '' %>" href="/admin/customers">Customers</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link <%= typeof activePage !== 'undefined' && activePage === 'stocks' ? 'active' : '' %>" href="/admin/stocks">Stocks</a>
@@ -32,18 +29,8 @@
 
             <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center">
                 <% if (user) { %>
-                    <!-- Cart Icon for Regular Users (Admins do not see this) -->
-                    <% if (user.role === 'regular') { %>
-                        <li class="nav-item me-2">
-                            <a class="nav-link" href="/cart" title="Cart">🛒
-                                <% if (typeof cartCount !== 'undefined' && cartCount > 0) { %>
-                                    <span class="badge rounded-pill bg-success align-text-top"><%= cartCount %></span>
-                                <% } %>
-                            </a>
-                        </li>
-                    <% } %>
-                    <!-- "View Site" dropdown for Admins -->
                     <% if (user.role === 'admin') { %>
+                        <!-- Admin "View" dropdown -->
                         <li class="nav-item dropdown me-3">
                             <a class="nav-link dropdown-toggle" href="#" id="viewDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 View
@@ -51,16 +38,14 @@
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="viewDropdown">
                                 <li><h6 class="dropdown-header">Switch View</h6></li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="/books">Customer View</a></li>
-                                <li><a class="dropdown-item" href="/admin">Admin View</a></li>
+                                <li><a class="dropdown-item" href="#" id="customerViewLink">Customer View</a></li>
+                                <li><a class="dropdown-item" href="#" id="adminViewLink">Admin View</a></li>
                             </ul>
                         </li>
                     <% } %>
-
-                    <!-- Profile Dropdown (with image and theme toggle) -->
+                    <!-- Profile Dropdown -->
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle profile-image-link" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <!-- Profile image - uses profile_image_url from user session or a default placeholder -->
                             <img src="<%= user.profile_image_url || '/assets/profile_headshot.png' %>"
                                  onerror="this.onerror=null;this.src='/assets/no_profile_headshot.png';"
                                  alt="Profile" class="profile-img">
@@ -69,23 +54,16 @@
                             <li><h6 class="dropdown-header">Hi, <%= user.username %>!</h6></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item <%= typeof activePage !== 'undefined' && activePage === 'profile' ? 'active' : '' %>" href="/profile">View Profile</a></li>
-                            <li>
-                                <a class="dropdown-item d-flex align-items-center justify-content-between" href="#" id="themeToggle">
-                                    <span>Theme</span>
-                                    <span class="theme-icon"><i class="fa-regular fa-lightbulb"></i></span> <!-- Initial icon, will change via JS -->
-                                </a>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="/logout">Logout</a></li>
                         </ul>
                     </li>
                 <% } else { %>
-                    <!-- Login/Sign Up buttons when logged out -->
+                    <!-- Not logged in -->
                     <li class="nav-item">
-                        <a class="btn btn-outline-light btn-sm me-2 <%= typeof activePage !== 'undefined' && activePage === 'login' ? 'active' : '' %>" href="/">Login</a>
+                        <a class="btn btn-outline-light btn-sm me-2" href="/">Login</a>
                     </li>
                     <li class="nav-item">
-                        <a class="btn btn-light btn-sm <%= typeof activePage !== 'undefined' && activePage === 'register' ? 'active' : '' %>" href="/">Sign Up</a>
+                        <a class="btn btn-light btn-sm" href="/">Sign Up</a>
                     </li>
                 <% } %>
             </ul>
@@ -94,36 +72,35 @@
 </nav>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const themeToggle = document.getElementById('themeToggle');
-        const themeIcon = themeToggle ? themeToggle.querySelector('.theme-icon') : null;
-        const body = document.body;
-
-        // Function to set the theme
-        function setTheme(theme) {
-            if (theme === 'dark') {
-                body.classList.remove('light-mode');
-                body.classList.add('dark-mode');
-                if (themeIcon) themeIcon.innerHTML = '<i class="fa-solid fa-lightbulb"></i>'; // Dark theme icon
-            } else {
-                body.classList.remove('dark-mode');
-                body.classList.add('light-mode');
-                if (themeIcon) themeIcon.innerHTML = '<i class="fa-regular fa-lightbulb"></i>'; // Light theme icon
-            }
-            localStorage.setItem('theme', theme);
-        }
-
-        // Load saved theme or default to light
-        const savedTheme = localStorage.getItem('theme') || 'light'; // Default to light
-        setTheme(savedTheme);
-
-        // Toggle theme on click
-        if (themeToggle) {
-            themeToggle.addEventListener('click', function(event) {
-                event.preventDefault(); // Prevent default link behavior
-                const currentTheme = body.classList.contains('dark-mode') ? 'dark' : 'light';
-                setTheme(currentTheme === 'dark' ? 'light' : 'dark');
-            });
-        }
-    });
+document.addEventListener('DOMContentLoaded', function() {
+    const customerViewLink = document.getElementById('customerViewLink');
+    const adminViewLink = document.getElementById('adminViewLink');
+    const adminContentContainer = document.getElementById('adminContentContainer');
+    const adminMainContent = document.querySelector('.admin-dashboard-main-content');
+    if (customerViewLink && adminContentContainer) {
+        customerViewLink.addEventListener('click', function(event) {
+            event.preventDefault();
+            fetch('/admin/customer-books-partial')
+                .then(res => res.text())
+                .then(html => {
+                    adminContentContainer.innerHTML = html;
+                    adminContentContainer.style.display = 'block';
+                    if (adminMainContent) adminMainContent.style.display = 'none';
+                })
+                .catch(() => {
+                    adminContentContainer.innerHTML = '<div class="alert alert-danger">Failed to load customer view.</div>';
+                    adminContentContainer.style.display = 'block';
+                    if (adminMainContent) adminMainContent.style.display = 'none';
+                });
+        });
+    }
+    if (adminViewLink && adminContentContainer) {
+        adminViewLink.addEventListener('click', function(event) {
+            event.preventDefault();
+            adminContentContainer.innerHTML = '';
+            adminContentContainer.style.display = 'none';
+            if (adminMainContent) adminMainContent.style.display = 'block';
+        });
+    }
+});
 </script>

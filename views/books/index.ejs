@@ -7,11 +7,14 @@
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-    <%- include('../partials/navbar', { user: user, activePage: 'books' }) %>
+    <% if (!isSimulated) { %>
+      <%- include('../partials/navbar', { user: user, activePage: 'books' }) %>
+    <% } %>
+
 <div class="container py-4">
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h1 class="mb-0">Books</h1>
-    <% if (user && user.role === 'admin') { %>
+    <% if (user && user.role === 'admin' && !isSimulated) { %>
       <a href="/books/new" class="btn btn-primary">+ New Book</a>
     <% } %>
   </div>
@@ -79,7 +82,7 @@
                 <button class="btn btn-sm btn-outline-success" title="Add to cart">🛒</button>
               </form>
             <% } %>
-            <% if (user && user.role === 'admin') { %>
+            <% if (user && user.role === 'admin' && !isSimulated) { %>
               <a href="/books/<%= b.book_id %>/edit" class="btn btn-sm btn-outline-primary">Edit</a>
               <form method="POST" action="/books/<%= b.book_id %>/delete" class="d-inline" onsubmit="return confirm('Delete this book?')">
                 <button class="btn btn-sm btn-outline-danger">Delete</button>
