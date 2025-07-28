@@ -696,7 +696,7 @@ app.get('/admin/books', checkAuthenticated, checkAdmin, async (req, res) => {
         const [genresRows] = await db.query(`SELECT DISTINCT genre FROM books WHERE genre IS NOT NULL AND genre <> '' ORDER BY genre ASC`);
         const genres = ['All', ...genresRows.map(r => r.genre)];
 
-        res.render('books/edit', { // Render admin-specific books index
+        res.render('books/index', { // Render admin-specific books index
             user: req.session.user,
             books,
             genres,
