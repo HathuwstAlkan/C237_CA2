@@ -1,4 +1,6 @@
 <!-- views/partials/navbar.ejs -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+<link rel="stylesheet" href="/style.css">
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="<%= user ? '/dashboard' : '/' %>">
@@ -57,6 +59,12 @@
                             <li><a class="dropdown-item" href="/logout">Logout</a></li>
                         </ul>
                     </li>
+                    <li class="nav-item ms-2">
+                    <button id="theme-toggle-btn" class="btn btn-link p-0 theme-icon" title="Toggle dark mode" style="font-size:1.7rem;">
+                        <i id="bulb-light" class="fa-regular fa-lightbulb"></i>
+                        <i id="bulb-dark" class="fa-solid fa-lightbulb" style="display:none;"></i>
+                    </button>
+                    </li>
                 <% } else { %>
                     <!-- Not logged in -->
                     <li class="nav-item">
@@ -70,6 +78,34 @@
         </div>
     </div>
 </nav>
+
+<script>
+(function() {
+  const body = document.body;
+  const btn = document.getElementById('theme-toggle-btn');
+  const iconLight = document.getElementById('bulb-light');
+  const iconDark = document.getElementById('bulb-dark');
+  function applyTheme(dark) {
+    if (dark) {
+      body.classList.add('dark-mode');
+      iconLight.style.display = 'none';
+      iconDark.style.display = '';
+    } else {
+      body.classList.remove('dark-mode');
+      iconLight.style.display = '';
+      iconDark.style.display = 'none';
+    }
+  }
+  let dark = localStorage.getItem('theme') === 'dark';
+  applyTheme(dark);
+  if (btn) btn.onclick = function() {
+    dark = !body.classList.contains('dark-mode');
+    applyTheme(dark);
+    localStorage.setItem('theme', dark ? 'dark' : 'light');
+  };
+})();
+</script>
+
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
